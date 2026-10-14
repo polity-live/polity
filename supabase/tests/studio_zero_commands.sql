@@ -1,4 +1,8 @@
 -- @covers schema 74_studio_zero_commands.sql
+-- @covers schema 90_foreign_keys.sql
+-- @covers schema 91_triggers.sql
+-- @covers schema 92_managed_policies.sql
+-- @covers schema 98_publications.sql
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SELECT plan(23);

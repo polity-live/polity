@@ -1,18 +1,18 @@
 {
   "version": 1,
   "expectedInventory": {
-    "tables": 197,
-    "columns": 2039,
-    "primaryKeys": 198,
-    "checks": 190,
-    "foreignKeys": 479,
-    "uniqueConstraints": 75,
+    "tables": 184,
+    "columns": 1922,
+    "primaryKeys": 184,
+    "checks": 165,
+    "foreignKeys": 453,
+    "uniqueConstraints": 72,
     "uniqueIndexes": 31,
-    "uniqueRules": 106,
-    "indexes": 764,
-    "functions": 152,
-    "triggers": 122,
-    "policies": 169,
+    "uniqueRules": 103,
+    "indexes": 746,
+    "functions": 112,
+    "triggers": 117,
+    "policies": 166,
     "cronBranches": 2
   },
   "expectedBehaviorAssertions": {
@@ -122,18 +122,6 @@
       "behavior": ["governance_voting.sql"]
     },
     {
-      "source": "20_2_election_candidate_vote.sql",
-      "behavior": ["governance_voting.sql"]
-    },
-    {
-      "source": "20_3_indicative_amendment_choice_vote.sql",
-      "behavior": ["governance_voting.sql"]
-    },
-    {
-      "source": "20_4_indicative_election_candidate_vote.sql",
-      "behavior": ["governance_voting.sql"]
-    },
-    {
       "source": "20_5_agenda_item_change_request.sql",
       "behavior": ["governance_voting.sql"]
     },
@@ -154,11 +142,6 @@
     {
       "source": "23_appearance_theme.sql",
       "behavior": ["account_configuration.sql"]
-    },
-    {
-      "source": "23_storage.sql",
-      "behavior": [],
-      "securityBehavior": ["storage_rls.sql"]
     },
     {
       "source": "24_user_preference.sql",
@@ -211,7 +194,7 @@
     },
     {
       "source": "35_security.sql",
-      "behavior": [],
+      "behavior": ["baseline_contract.sql"],
       "securityBehavior": ["permissions_contract.sql"]
     },
     {
@@ -219,87 +202,17 @@
       "behavior": ["communication_studio.sql"]
     },
     {
-      "source": "37_collaboration.sql",
-      "behavior": ["collaboration.sql"],
-      "securityBehavior": ["collaboration.sql"]
-    },
-    {
-      "source": "38_collaboration_workspaces.sql",
-      "behavior": ["collaboration_completion.sql"],
-      "securityBehavior": ["collaboration_completion.sql"]
-    },
-    {
-      "source": "39_collaboration_ballots.sql",
-      "behavior": ["collaboration_completion.sql"],
-      "securityBehavior": ["collaboration_completion.sql"]
-    },
-    {
-      "source": "40_collaboration_migration_attempts.sql",
-      "behavior": ["collaboration_completion.sql"],
-      "securityBehavior": ["collaboration_completion.sql"]
-    },
-    {
-      "source": "41_collaboration_compatibility.sql",
-      "behavior": ["collaboration_completion.sql"],
-      "securityBehavior": ["collaboration_completion.sql"]
-    },
-    {
-      "source": "42_collaboration_transaction_initialization.sql",
-      "behavior": ["collaboration_completion.sql"],
-      "securityBehavior": ["collaboration_completion.sql"]
-    },
-    {
-      "source": "43_collaboration_authority.sql",
-      "behavior": ["collaboration_completion.sql"],
-      "securityBehavior": ["collaboration_completion.sql"]
-    },
-    {
-      "source": "44_collaboration_integrity.sql",
-      "behavior": ["collaboration_completion.sql"],
-      "securityBehavior": ["collaboration_completion.sql"]
-    },
-    {
-      "source": "45_collaboration_legacy_fences.sql",
-      "behavior": ["collaboration_completion.sql"],
-      "securityBehavior": ["collaboration_completion.sql"]
-    },
-    {
-      "source": "46_collaboration_ballot_guards.sql",
-      "behavior": ["collaboration_completion.sql"],
-      "securityBehavior": ["collaboration_completion.sql"]
-    },
-    {
-      "source": "47_collaboration_tutorial.sql",
-      "behavior": ["collaboration_completion.sql"],
-      "securityBehavior": ["collaboration_completion.sql"]
-    },
-    {
-      "source": "48_studio_only_collaboration.sql",
-      "behavior": ["collaboration_completion.sql"],
-      "securityBehavior": ["collaboration_completion.sql"]
-    },
-    {
       "source": "49_studio_zero.sql",
-      "behavior": ["studio_zero.sql"],
+      "behavior": [
+        "studio_zero.sql",
+        "collaboration.sql",
+        "collaboration_completion.sql",
+        "studio_ai_procedures.sql"
+      ],
       "securityBehavior": ["studio_zero.sql"]
     },
     {
       "source": "50_studio_editor_actions.sql",
-      "behavior": ["studio_zero.sql"],
-      "securityBehavior": ["studio_zero.sql"]
-    },
-    {
-      "source": "51_retire_collaboration_functions.sql",
-      "behavior": ["studio_zero.sql"],
-      "securityBehavior": ["studio_zero.sql"]
-    },
-    {
-      "source": "52_studio_function_permissions.sql",
-      "behavior": ["studio_zero.sql"],
-      "securityBehavior": ["studio_zero.sql"]
-    },
-    {
-      "source": "53_studio_editor_claim.sql",
       "behavior": ["studio_zero.sql"],
       "securityBehavior": ["studio_zero.sql"]
     },
@@ -319,49 +232,13 @@
       "securityBehavior": ["canvas_workflows.sql"]
     },
     {
-      "source": "57_canvas_private_assets.sql",
-      "behavior": ["canvas_workflows.sql"],
-      "securityBehavior": ["canvas_workflows.sql"]
-    },
-    {
-      "source": "58_canvas_recipient_presence.sql",
-      "behavior": ["canvas_workflows.sql"],
-      "securityBehavior": ["canvas_workflows.sql"]
-    },
-    {
       "source": "59_canvas_zero_workspaces.sql",
       "behavior": ["canvas_workflows.sql"],
       "securityBehavior": ["canvas_workflows.sql"]
     },
     {
-      "source": "60_canvas_conflict_resolution.sql",
-      "behavior": ["canvas_workflows.sql"],
-      "securityBehavior": ["canvas_workflows.sql"]
-    },
-    {
-      "source": "61_canvas_function_permissions.sql",
-      "behavior": [],
-      "securityBehavior": ["permissions_contract.sql"]
-    },
-    {
-      "source": "62_studio_document_v3.sql",
-      "behavior": ["studio_zero.sql"]
-    },
-    {
       "source": "63_studio_v4_themes_elements.sql",
       "behavior": ["communication_studio.sql"]
-    },
-    {
-      "source": "64_studio_document_v5.sql",
-      "behavior": ["communication_studio.sql"]
-    },
-    {
-      "source": "65_studio_export_mime_types.sql",
-      "behavior": ["communication_studio.sql"]
-    },
-    {
-      "source": "66_group_studio_internal_modes.sql",
-      "behavior": ["canvas_workflows.sql"]
     },
     {
       "source": "67_personal_studio_collaborators.sql",
@@ -384,14 +261,6 @@
       "securityBehavior": ["studio_visibility_discovery.sql"]
     },
     {
-      "source": "71_studio_ai_suggestions.sql",
-      "behavior": ["studio_ai_procedures.sql"]
-    },
-    {
-      "source": "72_studio_personal_procedures.sql",
-      "behavior": ["studio_ai_procedures.sql"]
-    },
-    {
       "source": "73_ai_traces.sql",
       "behavior": ["ai_diagnostics.sql"]
     },
@@ -401,13 +270,115 @@
       "securityBehavior": ["studio_zero_commands.sql"]
     },
     {
+      "source": "75_event_studio.sql",
+      "behavior": ["event_studio.sql"],
+      "securityBehavior": ["event_studio.sql"]
+    },
+    {
       "source": "76_group_email_invitations.sql",
       "behavior": ["group_email_invitations.sql"],
       "securityBehavior": ["group_email_invitations.sql"]
     },
     {
-      "source": "75_event_studio.sql",
-      "behavior": ["event_studio.sql"],
+      "source": "90_foreign_keys.sql",
+      "behavior": [
+        "ai_diagnostics.sql",
+        "group_email_invitations.sql",
+        "governance_voting.sql",
+        "identity_group_network.sql",
+        "schema_constraints.sql",
+        "entity_activity_logs.sql",
+        "events_agenda_delegation.sql",
+        "account_configuration.sql",
+        "app_tutorial.sql",
+        "content_collaboration.sql",
+        "canvas_workflows.sql",
+        "todo_discussion_thread.sql",
+        "conversation_rollups.sql",
+        "datasets.sql",
+        "search_document_projection.sql",
+        "event_studio.sql",
+        "newsletter_sync.sql",
+        "push_notification_outbox.sql",
+        "notification_lifecycle.sql",
+        "search_document_acl.sql",
+        "communication_studio.sql",
+        "studio_zero_commands.sql",
+        "studio_zero.sql",
+        "todo_activity_log.sql",
+        "auth_assistant.sql"
+      ],
+      "securityBehavior": [
+        "group_email_invitations.sql",
+        "app_tutorial.sql",
+        "canvas_workflows.sql",
+        "search_document_acl.sql",
+        "event_studio.sql",
+        "newsletter_sync.sql",
+        "push_notification_outbox.sql",
+        "studio_zero_commands.sql",
+        "studio_zero.sql",
+        "communication_studio.sql"
+      ]
+    },
+    {
+      "source": "91_triggers.sql",
+      "behavior": [
+        "event_studio.sql",
+        "account_configuration.sql",
+        "canvas_workflows.sql",
+        "ai_diagnostics.sql",
+        "push_notification_outbox.sql",
+        "notification_lifecycle.sql",
+        "newsletter_sync.sql",
+        "studio_zero_commands.sql",
+        "todo_discussion_thread.sql",
+        "content_collaboration.sql",
+        "datasets.sql",
+        "search_document_projection.sql",
+        "conversation_rollups.sql",
+        "search_document_acl.sql",
+        "studio_visibility_discovery.sql",
+        "app_tutorial.sql",
+        "auth_assistant.sql",
+        "user_lifecycle.sql"
+      ],
+      "securityBehavior": [
+        "event_studio.sql",
+        "canvas_workflows.sql",
+        "push_notification_outbox.sql",
+        "newsletter_sync.sql",
+        "studio_zero_commands.sql",
+        "search_document_acl.sql",
+        "studio_visibility_discovery.sql",
+        "app_tutorial.sql",
+        "auth_assistant.sql"
+      ]
+    },
+    {
+      "source": "92_managed_policies.sql",
+      "behavior": ["studio_zero_commands.sql"],
+      "securityBehavior": ["studio_zero_commands.sql", "storage_rls.sql"]
+    },
+    {
+      "source": "98_publications.sql",
+      "behavior": [
+        "studio_zero.sql",
+        "canvas_workflows.sql",
+        "studio_zero_commands.sql",
+        "event_studio.sql",
+        "baseline_contract.sql"
+      ],
+      "securityBehavior": [
+        "studio_zero.sql",
+        "canvas_workflows.sql",
+        "studio_zero_commands.sql",
+        "event_studio.sql"
+      ]
+    },
+    {
+      "source": "99_event_templates.sql",
+      "behavior": ["event_studio.sql", "baseline_contract.sql"],
       "securityBehavior": ["event_studio.sql"]
     }
   ]

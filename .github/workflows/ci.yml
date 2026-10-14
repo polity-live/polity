@@ -82,7 +82,9 @@ jobs:
     name: Zero measurements / ${{ matrix.shard }}
     needs: [test-selection, zero-performance-prepare]
     if: fromJSON(needs.test-selection.outputs.enabled || '{}').performance == true
-    runs-on: ubuntu-24.04
+    # Query/security workers use public ARM64 runners. Run Chromium on the
+    # standard x64 Ubuntu worker; both revisions retain every original budget.
+    runs-on: ${{ matrix.layer == 'journeys' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}
     timeout-minutes: 15
     strategy:
       fail-fast: false
@@ -109,11 +111,16 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: zero-chromium-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+          key: zero-chromium-${{ runner.os }}-${{ runner.arch }}-${{ steps.playwright.outputs.version }}
       - name: Install Chromium with bounded Ubuntu mirror access
         if: matrix.layer == 'journeys'
         run: |
-          printf '%s\n' 'https://archive.ubuntu.com/ubuntu' | sudo tee /etc/apt/apt-mirrors.txt
+          if [[ "$RUNNER_ARCH" == "ARM64" ]]; then
+            zero_ubuntu_mirror='https://ports.ubuntu.com/ubuntu-ports'
+          else
+            zero_ubuntu_mirror='https://archive.ubuntu.com/ubuntu'
+          fi
+          printf '%s\n' "$zero_ubuntu_mirror" | sudo tee /etc/apt/apt-mirrors.txt
           printf '%s\n' 'Acquire::http::Timeout "30";' 'Acquire::https::Timeout "30";' 'Acquire::Retries "2";' | sudo tee /etc/apt/apt.conf.d/99polity-ci-network
           pnpm exec playwright install --with-deps chromium
       - name: Measure assigned cases and confirm regressions on this runner
@@ -368,7 +375,7 @@ jobs:
           path: coverage-browser/coverage-final.json
 
   coverage-shards:
-    name: Coverage Shard ${{ matrix.shard }} of 4
+    name: Coverage Shard ${{ matrix.shard }} of 8
     needs: [test-selection]
     if: fromJSON(needs.test-selection.outputs.enabled || '{}').coverage == true
     runs-on: ubuntu-latest
@@ -376,7 +383,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8]
     env:
       COVERAGE_SHARD_MAX_WORKERS: "2"
     steps:
@@ -385,7 +392,7 @@ jobs:
       - name: Run isolated instrumented shard
         run: >-
           COVERAGE_SHARD_ARTIFACT_DIR="$RUNNER_TEMP/polity-coverage-shards"
-          pnpm run test:coverage:shard "${{ matrix.shard }}/4"
+          pnpm run test:coverage:shard "${{ matrix.shard }}/8"
       - name: Upload coverage blob
         if: always()
         uses: actions/upload-artifact@v7
@@ -393,7 +400,7 @@ jobs:
           name: coverage-blob-${{ matrix.shard }}-${{ github.run_attempt }}
           if-no-files-found: error
           retention-days: 14
-          path: .vitest-reports/blob-${{ matrix.shard }}-4.json
+          path: .vitest-reports/blob-${{ matrix.shard }}-8.json
       - name: Upload shard diagnostics
         if: always()
         uses: actions/upload-artifact@v7
@@ -401,7 +408,7 @@ jobs:
           name: coverage-shard-${{ matrix.shard }}-${{ github.run_attempt }}
           if-no-files-found: ignore
           retention-days: 14
-          path: ${{ runner.temp }}/polity-coverage-shards/${{ matrix.shard }}-of-4/
+          path: ${{ runner.temp }}/polity-coverage-shards/${{ matrix.shard }}-of-8/
 
   coverage-ratchet:
     name: Coverage Ratchet
@@ -436,9 +443,9 @@ jobs:
           merge-multiple: true
       - name: Verify complete shard set
         run: |
-          blob_count="$(find "$RUNNER_TEMP/coverage-blobs" -maxdepth 1 -type f -name 'blob-*-4.json' | wc -l)"
-          if [[ "$blob_count" -ne 4 ]]; then
-            echo "Expected four coverage blobs, received $blob_count"
+          blob_count="$(find "$RUNNER_TEMP/coverage-blobs" -maxdepth 1 -type f -name 'blob-*-8.json' | wc -l)"
+          if [[ "$blob_count" -ne 8 ]]; then
+            echo "Expected eight coverage blobs, received $blob_count"
             exit 1
           fi
       - name: Merge coverage shards

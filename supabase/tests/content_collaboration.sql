@@ -5,6 +5,8 @@
 -- @covers schema 14_change_request.sql
 -- @covers schema 15_discussion.sql
 -- @covers schema 21_common.sql
+-- @covers schema 90_foreign_keys.sql
+-- @covers schema 91_triggers.sql
 BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;

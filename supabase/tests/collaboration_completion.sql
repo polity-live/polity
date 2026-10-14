@@ -1,14 +1,4 @@
--- @covers schema 38_collaboration_workspaces.sql
--- @covers schema 39_collaboration_ballots.sql
--- @covers schema 40_collaboration_migration_attempts.sql
--- @covers schema 41_collaboration_compatibility.sql
--- @covers schema 42_collaboration_transaction_initialization.sql
--- @covers schema 43_collaboration_authority.sql
--- @covers schema 44_collaboration_integrity.sql
--- @covers schema 45_collaboration_legacy_fences.sql
--- @covers schema 46_collaboration_ballot_guards.sql
--- @covers schema 47_collaboration_tutorial.sql
--- @covers schema 48_studio_only_collaboration.sql
+-- @covers schema 49_studio_zero.sql
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SELECT plan(6);

@@ -1,6 +1,5 @@
 import { expect, it } from 'vitest';
 import postgres from 'postgres';
-import { readFileSync } from 'node:fs';
 import { isLocalTestDatabase } from '@/test/local-database';
 import { studioDocumentV3Schema } from '@/features/communication-studio/logic/document-v3';
 import { applyPresentationCommand } from '../presentation';
@@ -15,7 +14,7 @@ const database =
 if (!isLocalTestDatabase(database))
   throw new Error('Event Studio tests require the local development database');
 
-it('backfills legacy cover settings without replacing manual content and fades music during agenda handoff', async () => {
+it('creates cover intro defaults, preserves manual opt-outs, and fades music during agenda handoff', async () => {
   const sql = postgres(database, { max: 1, prepare: false });
   const rollback = new Error('rollback intro fixtures');
   const [owner, event, agenda] = Array.from({ length: 3 }, () => crypto.randomUUID());
@@ -30,16 +29,15 @@ it('backfills legacy cover settings without replacing manual content and fades m
       const doc = studioDocumentV3Schema.parse(row.document);
       const cover = doc.nodes.find(n => n.type === 'frame' && n.eventSource?.template === 'cover')!;
       if (cover.type !== 'frame') throw new Error('frame');
+      expect(cover.intro).toMatchObject({ mode: 'spatial', intensity: 0.45 });
       delete cover.intro;
       cover.transform.width = 1777;
       const expected = structuredClone(doc);
       await tx`update studio_state set document=${tx.json(JSON.parse(JSON.stringify(doc)))} where project_id=${project.id}`;
-      await tx.unsafe(readFileSync('supabase/migrations/20261011030000_event_intro.sql', 'utf8'));
       const [changed] = await tx`select document from studio_state where project_id=${project.id}`;
       const parsed = studioDocumentV3Schema.parse(changed.document);
       const f = parsed.nodes.find(n => n.id === cover.id)!;
-      expect(f.type === 'frame' && f.intro).toMatchObject({ mode: 'spatial', intensity: 0.45 });
-      if (f.type === 'frame') delete f.intro;
+      expect(f.type === 'frame' && f.intro).toBeUndefined();
       expect(parsed).toEqual(expected);
       await tx`update event_presentation set mode='studio',running=true,frame_id=${cover.id},audio='{"builtin":"test-tone","status":"playing","position":1}'::jsonb where event_id=${event}`;
       await tx`update event set current_agenda_item_id=${agenda} where id=${event}`;

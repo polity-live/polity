@@ -1,11 +1,10 @@
 -- @covers schema 54_canvas_workflows.sql
 -- @covers schema 55_canvas_capabilities.sql
 -- @covers schema 56_canvas_authority_lock.sql
--- @covers schema 57_canvas_private_assets.sql
--- @covers schema 58_canvas_recipient_presence.sql
 -- @covers schema 59_canvas_zero_workspaces.sql
--- @covers schema 60_canvas_conflict_resolution.sql
--- @covers schema 66_group_studio_internal_modes.sql
+-- @covers schema 90_foreign_keys.sql
+-- @covers schema 91_triggers.sql
+-- @covers schema 98_publications.sql
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SELECT plan(25);

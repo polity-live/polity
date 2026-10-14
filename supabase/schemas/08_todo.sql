@@ -1,70 +1,76 @@
--- =============================================================================
--- 08_todo.sql — Todos and todo assignments
--- =============================================================================
+-- 08_todo.sql: canonical current definitions; historical upgrades are not replayed.
 
--- Todo table
 CREATE TABLE public.todo (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title TEXT,
-  description TEXT,
-  status TEXT,
-  priority TEXT,
-  due_date TIMESTAMPTZ,
-  completed_at TIMESTAMPTZ,
-  archived_at TIMESTAMPTZ,
-  tags JSONB,
-  visibility TEXT NOT NULL DEFAULT 'public',
-  creator_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  group_id UUID,
-  event_id UUID,
-  amendment_id UUID,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    title text,
+    description text,
+    status text,
+    priority text,
+    due_date timestamp with time zone,
+    completed_at timestamp with time zone,
+    archived_at timestamp with time zone,
+    tags jsonb,
+    visibility text DEFAULT 'public'::text NOT NULL,
+    creator_id uuid NOT NULL,
+    group_id uuid,
+    event_id uuid,
+    amendment_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    tutorial_run_id uuid,
+    CONSTRAINT todo_pkey PRIMARY KEY (id)
 );
 
-CREATE INDEX idx_todo_creator ON public.todo (creator_id);
-CREATE INDEX idx_todo_group ON public.todo (group_id);
-CREATE INDEX idx_todo_status ON public.todo (status);
-CREATE INDEX idx_todo_archived_at ON public.todo (archived_at DESC)
-WHERE archived_at IS NOT NULL;
-CREATE INDEX idx_todo_active_status ON public.todo (status)
-WHERE archived_at IS NULL;
+CREATE TABLE public.todo_activity (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    todo_id uuid NOT NULL,
+    actor_id uuid,
+    subject_user_id uuid,
+    action text NOT NULL,
+    severity text NOT NULL,
+    changes jsonb DEFAULT '[]'::jsonb NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT todo_activity_action_check CHECK ((action = ANY (ARRAY['created'::text, 'updated'::text, 'assigned'::text, 'unassigned'::text, 'archived'::text, 'unarchived'::text]))),
+    CONSTRAINT todo_activity_changes_check CHECK ((jsonb_typeof(changes) = 'array'::text)),
+    CONSTRAINT todo_activity_severity_check CHECK ((severity = ANY (ARRAY['normal'::text, 'high'::text]))),
+    CONSTRAINT todo_activity_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.todo_assignment (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    todo_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    role text,
+    assigned_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT todo_assignment_pkey PRIMARY KEY (id)
+);
 
 ALTER TABLE public.todo ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.todo FOR ALL TO service_role USING (true);
-
--- Todo assignment table
-CREATE TABLE public.todo_assignment (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  todo_id UUID NOT NULL REFERENCES public.todo (id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  role TEXT,
-  assigned_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_todo_assignment_todo ON public.todo_assignment (todo_id);
-CREATE INDEX idx_todo_assignment_user ON public.todo_assignment (user_id);
-
-ALTER TABLE public.todo_assignment ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.todo_assignment FOR ALL TO service_role USING (true);
-
--- Append-only activity history for todos. Application writes are performed by
--- trusted Zero mutators in the same transaction as the corresponding change.
-CREATE TABLE public.todo_activity (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  todo_id UUID NOT NULL REFERENCES public.todo (id) ON DELETE CASCADE,
-  actor_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
-  subject_user_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
-  action TEXT NOT NULL CHECK (
-    action IN ('created', 'updated', 'assigned', 'unassigned', 'archived', 'unarchived')
-  ),
-  severity TEXT NOT NULL CHECK (severity IN ('normal', 'high')),
-  changes JSONB NOT NULL DEFAULT '[]'::JSONB CHECK (jsonb_typeof(changes) = 'array'),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_todo_activity_todo_severity_created
-  ON public.todo_activity (todo_id, severity, created_at DESC);
 
 ALTER TABLE public.todo_activity ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.todo_activity FOR ALL TO service_role USING (true);
+
+ALTER TABLE public.todo_assignment ENABLE ROW LEVEL SECURITY;
+
+CREATE INDEX idx_todo_active_status ON public.todo USING btree (status) WHERE (archived_at IS NULL);
+
+CREATE INDEX idx_todo_activity_todo_severity_created ON public.todo_activity USING btree (todo_id, severity, created_at DESC);
+
+CREATE INDEX idx_todo_archived_at ON public.todo USING btree (archived_at DESC) WHERE (archived_at IS NOT NULL);
+
+CREATE INDEX idx_todo_assignment_todo ON public.todo_assignment USING btree (todo_id);
+
+CREATE INDEX idx_todo_assignment_user ON public.todo_assignment USING btree (user_id);
+
+CREATE INDEX idx_todo_creator ON public.todo USING btree (creator_id);
+
+CREATE INDEX idx_todo_group ON public.todo USING btree (group_id);
+
+CREATE INDEX idx_todo_status ON public.todo USING btree (status);
+
+CREATE INDEX todo_tutorial_run_id_idx ON public.todo USING btree (tutorial_run_id);
+
+CREATE POLICY service_role_all ON public.todo TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.todo_activity TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.todo_assignment TO service_role USING (true);

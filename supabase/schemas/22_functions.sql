@@ -1,14 +1,23 @@
--- =============================================================================
--- 22_functions.sql — Database functions and triggers
--- =============================================================================
+-- 22_functions.sql: canonical current definitions; historical upgrades are not replayed.
 
--- Handle new user creation from Supabase Auth
--- Automatically creates a user profile, default notification settings, and user preferences
-CREATE OR REPLACE FUNCTION public.ensure_aria_kai_user()
-RETURNS UUID
-LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = ''
-AS $$
+CREATE FUNCTION public.current_user_has_password() RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+  SELECT COALESCE(
+    (
+      SELECT NULLIF(u.encrypted_password, '') IS NOT NULL
+      FROM auth.users AS u
+      WHERE u.id = auth.uid()
+    ),
+    false
+  );
+$$;
+
+CREATE FUNCTION public.ensure_aria_kai_user() RETURNS uuid
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
 DECLARE
   assistant_user_id CONSTANT UUID :=
     'a12a0000-0000-4000-a000-000000000001'::UUID;
@@ -48,11 +57,10 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.ensure_assistant_conversation(target_user_id UUID)
-RETURNS UUID
-LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = ''
-AS $$
+CREATE FUNCTION public.ensure_assistant_conversation(target_user_id uuid) RETURNS uuid
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
 DECLARE
   assistant_user_id UUID;
   assistant_conversation_id UUID;
@@ -164,11 +172,22 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = ''
-AS $$
+CREATE FUNCTION public.handle_deleted_user() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
+BEGIN
+  DELETE FROM public."user"
+  WHERE id = OLD.id;
+
+  RETURN OLD;
+END;
+$$;
+
+CREATE FUNCTION public.handle_new_user() RETURNS trigger
+    LANGUAGE plpgsql SECURITY DEFINER
+    SET search_path TO ''
+    AS $$
 BEGIN
   INSERT INTO public."user" (id, email)
   VALUES (NEW.id, NEW.email);
@@ -191,47 +210,3 @@ BEGIN
   RETURN NEW;
 END;
 $$;
-
-CREATE OR REPLACE FUNCTION public.handle_deleted_user()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = ''
-AS $$
-BEGIN
-  DELETE FROM public."user"
-  WHERE id = OLD.id;
-
-  RETURN OLD;
-END;
-$$;
-
-REVOKE ALL ON FUNCTION public.handle_deleted_user() FROM PUBLIC;
-
-CREATE OR REPLACE FUNCTION public.current_user_has_password()
-RETURNS BOOLEAN
-LANGUAGE sql
-STABLE
-SECURITY DEFINER SET search_path = ''
-AS $$
-  SELECT COALESCE(
-    (
-      SELECT NULLIF(u.encrypted_password, '') IS NOT NULL
-      FROM auth.users AS u
-      WHERE u.id = auth.uid()
-    ),
-    false
-  );
-$$;
-
-REVOKE ALL ON FUNCTION public.current_user_has_password() FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.current_user_has_password() TO authenticated;
-
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW
-  EXECUTE FUNCTION public.handle_new_user();
-
-CREATE TRIGGER on_auth_user_deleted
-  AFTER DELETE ON auth.users
-  FOR EACH ROW
-  EXECUTE FUNCTION public.handle_deleted_user();

@@ -1,67 +1,57 @@
--- =============================================================================
--- 06_agenda.sql — Agenda items and speaker lists
--- Elections moved to 16_election.sql
--- Election votes moved to 20_vote.sql
--- =============================================================================
+-- 06_agenda.sql: canonical current definitions; historical upgrades are not replayed.
 
--- Agenda item table
 CREATE TABLE public.agenda_item (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  event_id UUID,
-  amendment_id UUID,
-  creator_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  title TEXT,
-  description TEXT,
-  type TEXT,
-  status TEXT,
-  forwarding_status TEXT,
-  order_index INTEGER,
-  duration INTEGER,
-  scheduled_time TEXT,
-  start_time TIMESTAMPTZ,
-  end_time TIMESTAMPTZ,
-  activated_at TIMESTAMPTZ,
-  completed_at TIMESTAMPTZ,
-  majority_type TEXT,
-  time_limit INTEGER,
-  voting_phase TEXT CHECK (voting_phase IN ('internal', 'indicative', 'final', 'closed')),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    event_id uuid,
+    amendment_id uuid,
+    creator_id uuid NOT NULL,
+    title text,
+    description text,
+    type text,
+    status text,
+    forwarding_status text,
+    order_index integer,
+    duration integer,
+    scheduled_time text,
+    start_time timestamp with time zone,
+    end_time timestamp with time zone,
+    activated_at timestamp with time zone,
+    completed_at timestamp with time zone,
+    majority_type text,
+    time_limit integer,
+    voting_phase text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT agenda_item_voting_phase_check CHECK ((voting_phase = ANY (ARRAY['internal'::text, 'indicative'::text, 'final'::text, 'closed'::text]))),
+    CONSTRAINT agenda_item_pkey PRIMARY KEY (id)
 );
 
-CREATE INDEX idx_agenda_item_event ON public.agenda_item (event_id);
-CREATE INDEX idx_agenda_item_creator ON public.agenda_item (creator_id);
-CREATE INDEX idx_zero_agenda_item_event_order_id
-  ON public.agenda_item (event_id, order_index, id);
+CREATE TABLE public.speaker_list (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    agenda_item_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    title text,
+    order_index integer,
+    "time" integer,
+    completed boolean DEFAULT false NOT NULL,
+    start_time timestamp with time zone,
+    end_time timestamp with time zone,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT speaker_list_pkey PRIMARY KEY (id)
+);
 
 ALTER TABLE public.agenda_item ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.agenda_item FOR ALL TO service_role USING (true);
-
-ALTER TABLE public.amendment_process_step_run
-  ADD CONSTRAINT amendment_process_step_run_agenda_item_fk
-  FOREIGN KEY (agenda_item_id) REFERENCES public.agenda_item (id)
-  ON DELETE SET NULL;
-
-ALTER TABLE public.process_task
-  ADD CONSTRAINT process_task_agenda_item_fk
-  FOREIGN KEY (agenda_item_id) REFERENCES public.agenda_item (id)
-  ON DELETE SET NULL;
-
--- Speaker list table
-CREATE TABLE public.speaker_list (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  agenda_item_id UUID NOT NULL REFERENCES public.agenda_item (id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  title TEXT,
-  order_index INTEGER,
-  time INTEGER,
-  completed BOOLEAN NOT NULL DEFAULT false,
-  start_time TIMESTAMPTZ,
-  end_time TIMESTAMPTZ,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_speaker_list_agenda_item ON public.speaker_list (agenda_item_id);
 
 ALTER TABLE public.speaker_list ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.speaker_list FOR ALL TO service_role USING (true);
+
+CREATE INDEX idx_agenda_item_creator ON public.agenda_item USING btree (creator_id);
+
+CREATE INDEX idx_agenda_item_event ON public.agenda_item USING btree (event_id);
+
+CREATE INDEX idx_speaker_list_agenda_item ON public.speaker_list USING btree (agenda_item_id);
+
+CREATE INDEX idx_zero_agenda_item_event_order_id ON public.agenda_item USING btree (event_id, order_index, id);
+
+CREATE POLICY service_role_all ON public.agenda_item TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.speaker_list TO service_role USING (true);

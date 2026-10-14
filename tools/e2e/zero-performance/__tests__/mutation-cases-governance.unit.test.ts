@@ -22,6 +22,72 @@ import {
 } from '../../../../src/zero/agendas/schema';
 
 describe('reviewed governance mutation catalog', () => {
+  it('waits for the exact electorate before capturing a rejected snapshot-write baseline', async () => {
+    for (const name of [
+      'ZERO_UPSTREAM_DB',
+      'E2E_DATABASE_URL',
+      'DATABASE_URL',
+      'SUPABASE_DB_URL',
+      'STUDIO_DATABASE_URL',
+      'STUDIO_TEST_DATABASE_URL',
+    ])
+      vi.stubEnv(name, 'postgres://postgres:fixture@127.0.0.1:15625/postgres');
+    vi.stubEnv('SUPABASE_URL', 'http://127.0.0.1:15624');
+    const fixtureID = 'snapshot-readiness';
+    const electorIDs = [
+      mutationFixtureID(fixtureID, 'casting-elector'),
+      mutationFixtureID(fixtureID, 'second-elector'),
+    ];
+    const sql = ((input: string | TemplateStringsArray, ...values: unknown[]) => {
+      if (typeof input === 'string') return input;
+      return Promise.resolve(
+        ['elector', 'voter'].includes(String(values[0])) ? electorIDs.map(id => ({ id })) : []
+      );
+    }) as unknown as MutationCaseContext['sql'];
+    try {
+      for (const method of ['insert', 'track', 'trackScope', 'update'] as const)
+        vi.spyOn(MutationFixtures.prototype, method).mockResolvedValue(undefined);
+      vi.spyOn(MutationFixtures.prototype, 'rows').mockResolvedValue([]);
+      for (const [name, relation] of [
+        ['elections.deleteElector', 'electors'],
+        ['votes.deleteVoter', 'voters'],
+      ]) {
+        const entry = governanceMutationCases().find(c => c.name === name);
+        if (!entry) throw new Error('Missing rejected electorate case');
+        const prepared = await entry.prepare({
+          id: fixtureID,
+          ownerID: 'owner',
+          outsiderID: 'outsider',
+          actorID: 'owner',
+          actor: 'owner',
+          sql,
+        });
+        const root = {
+          id: mutationFixtureID(fixtureID, 'casting-ballot'),
+          status: 'indicative',
+        };
+        expect(prepared.requireWriterBefore).toBe(true);
+        expect(prepared.observe?.before(undefined)).toBe(false);
+        expect(prepared.observe?.before({ ...root, status: 'pending' })).toBe(false);
+        expect(prepared.observe?.before(root)).toBe(false);
+        expect(prepared.observe?.before({ ...root, [relation]: [{ id: electorIDs[0] }] })).toBe(
+          false
+        );
+        expect(
+          prepared.observe?.before({
+            ...root,
+            [relation]: [{ id: electorIDs[0] }, { id: 'unexpected' }],
+          })
+        ).toBe(false);
+        expect(
+          prepared.observe?.before({ ...root, [relation]: electorIDs.map(id => ({ id })) })
+        ).toBe(true);
+      }
+    } finally {
+      vi.restoreAllMocks();
+      vi.unstubAllEnvs();
+    }
+  });
   it('preloads public group import parents and verifies SQL result subclasses as plain name collections', async () => {
     const address = 'postgres://postgres:fixture@127.0.0.1:15625/postgres';
     for (const name of [

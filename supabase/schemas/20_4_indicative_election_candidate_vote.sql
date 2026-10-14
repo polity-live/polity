@@ -1,1 +1,0 @@
--- Replaced by elector + participation/selection tables in 16_position_election.sql

@@ -5,6 +5,8 @@
 -- @covers schema 26_voting_password.sql
 -- @covers schema 28_ai.sql
 -- @covers schema 29_pql_filter.sql
+-- @covers schema 90_foreign_keys.sql
+-- @covers schema 91_triggers.sql
 BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;

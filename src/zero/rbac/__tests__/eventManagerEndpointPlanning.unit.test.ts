@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { queryAST } from '../../../../tools/e2e/zero-performance/oracle';
 import {
@@ -147,7 +147,10 @@ describe('group role indexed endpoints', () => {
     }
   });
   it('requires the indexed role key and validated membership and guest foreign keys', () => {
-    const migration = readFileSync('supabase/migrations/20260922043912_initial_reset.sql', 'utf8');
+    const migration = readFileSync(
+      `supabase/migrations/${readdirSync('supabase/migrations').find(file => file.endsWith('_initial.sql'))}`,
+      'utf8'
+    );
     expect(migration).toContain(
       'alter table "public"."role" add constraint "role_pkey" PRIMARY KEY using index "role_pkey";'
     );
@@ -295,7 +298,10 @@ describe('ballot manager indexed foreign-key endpoints', () => {
   });
 
   it('targets indexed primary keys for every added endpoint', () => {
-    const migration = readFileSync('supabase/migrations/20260922043912_initial_reset.sql', 'utf8');
+    const migration = readFileSync(
+      `supabase/migrations/${readdirSync('supabase/migrations').find(file => file.endsWith('_initial.sql'))}`,
+      'utf8'
+    );
     for (const child of ['agenda_item', 'event', 'election', 'vote']) {
       expect(migration).toContain(
         `alter table "public"."${child}" add constraint "${child}_pkey" PRIMARY KEY using index "${child}_pkey";`
@@ -361,7 +367,10 @@ describe('event manager indexed participant endpoint', () => {
     }
   });
   it('requires the validated participant foreign key for the indexed endpoint', () => {
-    const migration = readFileSync('supabase/migrations/20260922043912_initial_reset.sql', 'utf8');
+    const migration = readFileSync(
+      `supabase/migrations/${readdirSync('supabase/migrations').find(file => file.endsWith('_initial.sql'))}`,
+      'utf8'
+    );
     expect(migration).toContain(
       'FOREIGN KEY (event_participant_id) REFERENCES public.event_participant(id)'
     );

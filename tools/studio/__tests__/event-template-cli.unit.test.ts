@@ -41,16 +41,12 @@ it.each([false, true])(
     ];
     vi.resetModules();
     const { eventTemplateSqlRows } = await import('../build-event-templates');
-    const expected = `-- Existing schema\n-- EVENT_TEMPLATE_ROWS\n${eventTemplateSqlRows()}\n\nCREATE TABLE public.studio_live_source(id uuid);`;
-    expect(io.write).toHaveBeenCalledWith('supabase/schemas/75_event_studio.sql', expected);
-    expect(io.write).toHaveBeenCalledTimes(schemaOnly ? 1 : 2);
-    if (!schemaOnly)
-      expect(io.write).toHaveBeenCalledWith(
-        'supabase/migrations/20261011010000_event_studio.sql',
-        expected
-      );
+    const expected = `-- MANUAL_SQL: Required Event Studio template rows; schema diffs never emit DML.\n-- EVENT_TEMPLATE_ROWS\n${eventTemplateSqlRows()}\n`;
+    expect(io.write).toHaveBeenCalledWith('supabase/schemas/99_event_templates.sql', expected);
+    expect(io.write).toHaveBeenCalledOnce();
     expect(expected).not.toContain('\r');
     expect(expected.match(/INSERT INTO public.studio_event_template/g)).toHaveLength(9);
+    expect(expected.match(/ON CONFLICT\(kind\)/g)).toHaveLength(9);
   }
 );
 

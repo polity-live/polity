@@ -55,7 +55,7 @@ Optional campaign or branch qualifiers come before the style suffix, for example
 - Branch accountability fingerprints every branch alternative. `pnpm run test:coverage:branches:check` rejects new uncovered branches, stale debt and stale exceptions. Any non-critical exception must name an owner, evidence, an issue, test references and an expiry of no more than 30 days; critical domains cannot use exceptions. The current inventories contain no branch debt and no exceptions.
 - The coverage manifest defines which source is instrumented and how excluded artifacts are verified. Do not exclude source merely to satisfy the percentage.
 
-CI creates coverage in four shards, merges the results and then enforces the repository ratchet, the complete branch inventory, changed-code coverage and exact test-reference evidence.
+CI creates coverage in eight shards with two workers each, merges all eight blobs and then enforces the repository ratchet, the complete branch inventory, changed-code coverage and exact test-reference evidence. Splitting the same suite into smaller assignments keeps instrumented runs within the unchanged 20-minute job limit; every original test and the 100% coverage requirements remain mandatory.
 
 The repository still contains pre-existing Prettier debt. CI therefore runs `pnpm run format:check:changed`: every file introduced or changed by a pull request must be formatted immediately, while unrelated legacy files are not rewritten as part of a test change.
 

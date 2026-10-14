@@ -1,5 +1,4 @@
--- @covers schema 71_studio_ai_suggestions.sql
--- @covers schema 72_studio_personal_procedures.sql
+-- @covers schema 49_studio_zero.sql
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SELECT plan(21);

@@ -1672,9 +1672,21 @@ function ballotCastingCases(): MutationCase[] {
                         : { id: d.kind === 'snapshot-delete' ? electorID : tallyID };
         const before = (data: unknown) =>
           object(data)?.id === ballotID &&
-          object(data)?.status === (d.kind === 'start' ? 'pending' : phase);
+          object(data)?.status === (d.kind === 'start' ? 'pending' : phase) &&
+          // A rejected snapshot write must start with the complete replicated
+          // electorate. A root-only baseline can race late fixture rows and
+          // incorrectly report their subsequent arrival as a failed rollback.
+          (!internal ||
+            (rows(object(data)?.[isElection ? 'electors' : 'voters']).length ===
+              baselineElectors.length &&
+              baselineElectors.every(elector =>
+                rows(object(data)?.[isElection ? 'electors' : 'voters']).some(
+                  replicated => replicated.id === elector.id
+                )
+              )));
         return {
           args: args as ReadonlyJSONValue,
+          requireWriterBefore: internal,
           observe: {
             request: isElection
               ? queries.elections.byId({ id: ballotID })

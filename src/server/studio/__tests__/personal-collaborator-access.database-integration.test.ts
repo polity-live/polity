@@ -1,4 +1,3 @@
-import { readFileSync } from 'node:fs';
 import postgres from 'postgres';
 import { isLocalTestDatabase } from '@/test/local-database';
 import { expect, it } from 'vitest';
@@ -17,14 +16,6 @@ it('grants edit only after acceptance and removes it on decline or revocation', 
   const invitation = crypto.randomUUID();
   try {
     await sql.begin(async tx => {
-      const [table] = await tx`select to_regclass('public.studio_project_collaborator') as name`;
-      if (!table.name) {
-        const migration = readFileSync(
-          'supabase/migrations/20260923050000_personal_studio_collaborators.sql',
-          'utf8'
-        );
-        await tx.unsafe(migration);
-      }
       await tx`insert into "user"(id) values(${owner}),(${guest})`;
       await tx`insert into studio_project(id,owner_id,group_id,title,kind,document_schema_version,created_at,updated_at)
         values(${project},${owner},null,'Access test','single',5,0,0)`;

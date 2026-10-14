@@ -118,7 +118,17 @@ describe('active Zero CI budget', () => {
       prepare.steps.find((step: any) => step.id === 'prepare').env.ZERO_PERFORMANCE_BASE_REF
     ).toContain('inputs.zero_baseline_ref');
     expect(prepare['runs-on']).toBe('ubuntu-24.04');
-    expect(runners['runs-on']).toBe('ubuntu-24.04');
+    expect(runners['runs-on']).toBe(
+      "${{ matrix.layer == 'journeys' && 'ubuntu-24.04' || 'ubuntu-24.04-arm' }}"
+    );
+    expect(
+      runners.steps.find((step: any) => step.name === 'Cache pinned Chromium').with.key
+    ).toContain('${{ runner.arch }}');
+    const browserInstall = runners.steps.find(
+      (step: any) => step.name === 'Install Chromium with bounded Ubuntu mirror access'
+    ).run;
+    expect(browserInstall).toContain('$RUNNER_ARCH');
+    expect(browserInstall).toContain('https://ports.ubuntu.com/ubuntu-ports');
     expect(runners.strategy['max-parallel']).toBe(20);
     expect(runners.strategy['fail-fast']).toBe(false);
     expect(gate.name).toBe('Zero Query Performance');

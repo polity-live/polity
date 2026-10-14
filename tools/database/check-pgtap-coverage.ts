@@ -232,7 +232,7 @@ const inventory: Record<string, number> = {
     countMatches(uncommentedSql, /\bPRIMARY\s+KEY\b/gi) +
     uniqueDeclarations,
   functions: countMatches(uncommentedSql, /\bCREATE(?:\s+OR\s+REPLACE)?\s+FUNCTION\s+/gi),
-  triggers: countMatches(uncommentedSql, /\bCREATE\s+TRIGGER\s+/gi),
+  triggers: countMatches(uncommentedSql, /\bCREATE\s+(?:CONSTRAINT\s+)?TRIGGER\s+/gi),
   policies: countMatches(uncommentedSql, /\bCREATE\s+POLICY\s+/gi),
   cronBranches: new Set(
     [...uncommentedSql.matchAll(/\bcron\.schedule\s*\(\s*'([^']+)'/gi)].map(match => match[1])
@@ -244,7 +244,7 @@ for (const assignment of matrix.assignments) {
   const hasBusinessCheck = [...sql.matchAll(/\b(WITH\s+)?CHECK\s*\(/gi)].some(match => !match[1]);
   const hasBehavioralObjects =
     hasBusinessCheck ||
-    /\bCREATE\s+TABLE\b|\bUNIQUE\b|\bCREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\b|\bCREATE\s+TRIGGER\b/i.test(
+    /\bCREATE\s+TABLE\b|\bUNIQUE\b|\bCREATE\s+(?:OR\s+REPLACE\s+)?FUNCTION\b|\bCREATE\s+(?:CONSTRAINT\s+)?TRIGGER\b/i.test(
       sql
     );
   if (hasBehavioralObjects && assignment.behavior.length === 0) {

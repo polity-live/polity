@@ -1,392 +1,409 @@
--- =============================================================================
--- 02_group.sql — Groups, memberships, roles, action rights, incumbents
--- Group relationships moved to 19_network.sql
--- Role incumbents and scoped offices live on `role` / `role_holder_history`
--- =============================================================================
+-- 02_group.sql: canonical current definitions; historical upgrades are not replayed.
 
--- Group table (quoted because "group" is a reserved word)
-CREATE TABLE public."group" (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT,
-  description JSONB,
-  email TEXT,
-  country TEXT,
-  region TEXT,
-  post_code TEXT,
-  city TEXT,
-  street TEXT,
-  house_number TEXT,
-  latitude DOUBLE PRECISION,
-  longitude DOUBLE PRECISION,
-  location_kind TEXT,
-  location_place_id TEXT,
-  location_boundary_source TEXT,
-  location_geometry JSONB,
-  location_bounds JSONB,
-  image_url TEXT,
-  video_url TEXT,
-  visibility TEXT NOT NULL DEFAULT 'public',
-  member_count INTEGER NOT NULL DEFAULT 0,
-  signed_up_member_count INTEGER NOT NULL DEFAULT 0,
-  subscriber_count INTEGER NOT NULL DEFAULT 0,
-  event_count INTEGER NOT NULL DEFAULT 0,
-  amendment_count INTEGER NOT NULL DEFAULT 0,
-  document_count INTEGER NOT NULL DEFAULT 0,
-  group_type TEXT NOT NULL DEFAULT 'base'
-    CHECK (group_type IN ('base', 'hierarchical', 'sibling', 'parliament', 'committee', 'institution')),
-  has_hierarchy_children BOOLEAN NOT NULL DEFAULT false,
-  has_sibling_connections BOOLEAN NOT NULL DEFAULT false,
-  connected_group_id UUID REFERENCES public."group" (id) ON DELETE SET NULL,
-  primary_sibling_membership_mode TEXT
-    CHECK (
-      primary_sibling_membership_mode IS NULL
-      OR primary_sibling_membership_mode IN ('none', 'all_members', 'role_members', 'selected_source_groups')
-    ),
-  sibling_membership_mode TEXT
-    CHECK (
-      sibling_membership_mode IS NULL
-      OR sibling_membership_mode IN ('open', 'elected', 'parliament')
-    ),
-  sibling_role_id UUID,
-  x TEXT,
-  youtube TEXT,
-  linkedin TEXT,
-  website TEXT,
-  whatsapp TEXT,
-  instagram TEXT,
-  twitter TEXT,
-  facebook TEXT,
-  snapchat TEXT,
-  tiktok TEXT,
-  owner_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  CONSTRAINT group_single_primary_media_check CHECK (image_url IS NULL OR video_url IS NULL)
+CREATE TABLE public.action_right (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    resource text,
+    action text,
+    role_id uuid NOT NULL,
+    group_id uuid,
+    event_id uuid,
+    amendment_id uuid,
+    blog_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT action_right_pkey PRIMARY KEY (id)
 );
 
-CREATE INDEX idx_group_owner ON public."group" (owner_id);
-CREATE INDEX idx_group_type ON public."group" (group_type);
-CREATE INDEX idx_group_connected_group ON public."group" (connected_group_id);
-CREATE INDEX idx_group_hierarchy_children ON public."group" (has_hierarchy_children);
-CREATE INDEX idx_group_sibling_connections ON public."group" (has_sibling_connections);
+CREATE TABLE public."group" (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text,
+    description jsonb,
+    email text,
+    country text,
+    region text,
+    post_code text,
+    city text,
+    street text,
+    house_number text,
+    latitude double precision,
+    longitude double precision,
+    location_kind text,
+    location_place_id text,
+    location_boundary_source text,
+    location_geometry jsonb,
+    location_bounds jsonb,
+    image_url text,
+    video_url text,
+    visibility text DEFAULT 'public'::text NOT NULL,
+    member_count integer DEFAULT 0 NOT NULL,
+    signed_up_member_count integer DEFAULT 0 NOT NULL,
+    subscriber_count integer DEFAULT 0 NOT NULL,
+    event_count integer DEFAULT 0 NOT NULL,
+    amendment_count integer DEFAULT 0 NOT NULL,
+    document_count integer DEFAULT 0 NOT NULL,
+    group_type text DEFAULT 'base'::text NOT NULL,
+    has_hierarchy_children boolean DEFAULT false NOT NULL,
+    has_sibling_connections boolean DEFAULT false NOT NULL,
+    connected_group_id uuid,
+    primary_sibling_membership_mode text,
+    sibling_membership_mode text,
+    sibling_role_id uuid,
+    x text,
+    youtube text,
+    linkedin text,
+    website text,
+    whatsapp text,
+    instagram text,
+    twitter text,
+    facebook text,
+    snapchat text,
+    tiktok text,
+    owner_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    tutorial_run_id uuid,
+    CONSTRAINT group_group_type_check CHECK ((group_type = ANY (ARRAY['base'::text, 'hierarchical'::text, 'sibling'::text, 'parliament'::text, 'committee'::text, 'institution'::text]))),
+    CONSTRAINT group_primary_sibling_membership_mode_check CHECK (((primary_sibling_membership_mode IS NULL) OR (primary_sibling_membership_mode = ANY (ARRAY['none'::text, 'all_members'::text, 'role_members'::text, 'selected_source_groups'::text])))),
+    CONSTRAINT group_sibling_membership_mode_check CHECK (((sibling_membership_mode IS NULL) OR (sibling_membership_mode = ANY (ARRAY['open'::text, 'elected'::text, 'parliament'::text])))),
+    CONSTRAINT group_single_primary_media_check CHECK (((image_url IS NULL) OR (video_url IS NULL))),
+    CONSTRAINT group_pkey PRIMARY KEY (id)
+);
 
 CREATE TABLE public.group_activity (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
-  actor_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
-  actor_type TEXT NOT NULL DEFAULT 'user' CHECK (actor_type IN ('user', 'system')),
-  subject_user_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
-  action TEXT NOT NULL CHECK (action IN (
-    'created', 'updated', 'membership_added', 'membership_updated',
-    'membership_removed', 'guest_added', 'guest_updated', 'guest_removed',
-    'offline_member_added', 'offline_member_updated', 'offline_member_removed',
-    'offline_members_imported', 'role_created', 'role_updated', 'role_deleted',
-    'role_assigned', 'role_unassigned', 'right_assigned', 'right_unassigned',
-    'term_updated', 'relationship_updated', 'reconciliation'
-  )),
-  severity TEXT NOT NULL CHECK (severity IN ('normal', 'high')),
-  changes JSONB NOT NULL DEFAULT '[]'::JSONB CHECK (jsonb_typeof(changes) = 'array'),
-  context JSONB NOT NULL DEFAULT '{}'::JSONB CHECK (jsonb_typeof(context) = 'object'),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    group_id uuid NOT NULL,
+    actor_id uuid,
+    actor_type text DEFAULT 'user'::text NOT NULL,
+    subject_user_id uuid,
+    action text NOT NULL,
+    severity text NOT NULL,
+    changes jsonb DEFAULT '[]'::jsonb NOT NULL,
+    context jsonb DEFAULT '{}'::jsonb NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT group_activity_action_check CHECK ((action = ANY (ARRAY['created'::text, 'updated'::text, 'membership_added'::text, 'membership_updated'::text, 'membership_removed'::text, 'guest_added'::text, 'guest_updated'::text, 'guest_removed'::text, 'offline_member_added'::text, 'offline_member_updated'::text, 'offline_member_removed'::text, 'offline_members_imported'::text, 'role_created'::text, 'role_updated'::text, 'role_deleted'::text, 'role_assigned'::text, 'role_unassigned'::text, 'right_assigned'::text, 'right_unassigned'::text, 'term_updated'::text, 'relationship_updated'::text, 'reconciliation'::text]))),
+    CONSTRAINT group_activity_actor_type_check CHECK ((actor_type = ANY (ARRAY['user'::text, 'system'::text]))),
+    CONSTRAINT group_activity_changes_check CHECK ((jsonb_typeof(changes) = 'array'::text)),
+    CONSTRAINT group_activity_context_check CHECK ((jsonb_typeof(context) = 'object'::text)),
+    CONSTRAINT group_activity_severity_check CHECK ((severity = ANY (ARRAY['normal'::text, 'high'::text]))),
+    CONSTRAINT group_activity_pkey PRIMARY KEY (id)
 );
 
-CREATE INDEX idx_group_activity_created
-  ON public.group_activity (group_id, created_at DESC, id DESC);
-CREATE INDEX idx_group_activity_severity_created
-  ON public.group_activity (group_id, severity, created_at DESC, id DESC);
-
-ALTER TABLE public.group_activity ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.group_activity
-  FOR ALL TO service_role USING (true);
-
-ALTER TABLE public."group" ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public."group" FOR ALL TO service_role USING (true);
-
--- Role table
-CREATE TABLE public.role (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT,
-  description TEXT,
-  scope TEXT,
-  group_id UUID REFERENCES public."group" (id) ON DELETE CASCADE,
-  event_id UUID,
-  amendment_id UUID,
-  blog_id UUID,
-  assignment_mode TEXT NOT NULL DEFAULT 'assigned' CHECK (assignment_mode IN ('assigned', 'elected')),
-  visibility TEXT NOT NULL DEFAULT 'public' CHECK (visibility IN ('public', 'authenticated', 'private')),
-  term_start_date TIMESTAMPTZ,
-  is_recurring BOOLEAN NOT NULL DEFAULT false,
-  recurrence_pattern TEXT,
-  recurrence_rule TEXT,
-  recurrence_interval INTEGER,
-  recurrence_days INTEGER[],
-  recurrence_end_date TIMESTAMPTZ,
-  scheduled_revote_date TIMESTAMPTZ,
-  default_request_role BOOLEAN NOT NULL DEFAULT false,
-  default_invite_role BOOLEAN NOT NULL DEFAULT false,
-  assignee_kind TEXT NOT NULL DEFAULT 'member' CHECK (assignee_kind IN ('member', 'guest')),
-  sort_order INTEGER NOT NULL DEFAULT 0,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_role_group ON public.role (group_id);
-CREATE INDEX idx_role_event ON public.role (event_id);
-CREATE INDEX idx_role_scope ON public.role (scope);
-CREATE INDEX idx_role_assignee_kind ON public.role (assignee_kind);
-CREATE INDEX idx_zero_role_amendment_scope_id ON public.role (amendment_id, scope, id);
-CREATE INDEX idx_zero_role_blog_scope_id ON public.role (blog_id, scope, id);
-CREATE INDEX idx_zero_role_group_scope_order_id ON public.role (group_id, scope, sort_order, id);
-
-ALTER TABLE public.role ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.role FOR ALL TO service_role USING (true);
-
--- Role holder history table
-CREATE TABLE public.role_holder_history (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  role_id UUID NOT NULL REFERENCES public.role (id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  start_date TIMESTAMPTZ,
-  end_date TIMESTAMPTZ,
-  reason TEXT,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_role_holder_history_role ON public.role_holder_history (role_id);
-CREATE INDEX idx_role_holder_history_user ON public.role_holder_history (user_id);
-CREATE INDEX idx_zero_role_holder_history_role_end_id
-  ON public.role_holder_history (role_id, end_date, id);
-
-ALTER TABLE public.role_holder_history ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.role_holder_history FOR ALL TO service_role USING (true);
-
--- Group membership table
-CREATE TABLE public.group_membership (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  status TEXT,
-  visibility TEXT NOT NULL DEFAULT 'public',
-  source TEXT NOT NULL DEFAULT 'direct',
-  source_group_id UUID REFERENCES public."group" (id) ON DELETE CASCADE,
-  origin_kind TEXT NOT NULL DEFAULT 'direct'
-    CHECK (
-      origin_kind IN (
-        'direct',
-        'hierarchy',
-        'sibling_all_members',
-        'sibling_role_members',
-        'sibling_selected_source_groups',
-        'manual_projection'
-      )
-    ),
-  connection_id UUID,
-  membership_rule_id UUID,
-  part_group_id UUID REFERENCES public."group" (id) ON DELETE SET NULL,
-  base_group_id UUID REFERENCES public."group" (id) ON DELETE SET NULL,
-  is_auto_managed BOOLEAN NOT NULL DEFAULT false,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (user_id, group_id)
-);
-
-CREATE INDEX idx_group_membership_group ON public.group_membership (group_id);
-CREATE INDEX idx_group_membership_user ON public.group_membership (user_id);
-CREATE INDEX idx_group_membership_source_group ON public.group_membership (source_group_id);
-CREATE INDEX idx_group_membership_group_status ON public.group_membership (group_id, status);
-CREATE INDEX idx_group_membership_user_status ON public.group_membership (user_id, status);
-CREATE INDEX idx_group_membership_origin_kind ON public.group_membership (origin_kind);
-CREATE INDEX idx_group_membership_connection ON public.group_membership (connection_id);
-CREATE INDEX idx_group_membership_membership_rule ON public.group_membership (membership_rule_id);
-CREATE INDEX idx_group_membership_part_group ON public.group_membership (part_group_id);
-CREATE INDEX idx_group_membership_base_group ON public.group_membership (base_group_id);
-CREATE INDEX idx_zero_group_membership_user_created_id
-  ON public.group_membership (user_id, created_at DESC, id DESC);
-CREATE INDEX idx_zero_group_membership_group_created_id
-  ON public.group_membership (group_id, created_at DESC, id DESC);
-
-ALTER TABLE public.group_membership ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.group_membership FOR ALL TO service_role USING (true);
-
--- Explicit provenance for projected memberships. One membership row stays the
--- read-compatible canonical membership; this table explains why it exists.
-CREATE TABLE public.group_membership_origin (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  group_membership_id UUID NOT NULL REFERENCES public.group_membership (id) ON DELETE CASCADE,
-  origin_kind TEXT NOT NULL
-    CHECK (
-      origin_kind IN (
-        'direct',
-        'hierarchy',
-        'sibling_all_members',
-        'sibling_role_members',
-        'sibling_selected_source_groups',
-        'manual_projection'
-      )
-    ),
-  source_group_id UUID REFERENCES public."group" (id) ON DELETE CASCADE,
-  source_membership_id UUID REFERENCES public.group_membership (id) ON DELETE SET NULL,
-  connection_id UUID,
-  membership_rule_id UUID,
-  source_role_id UUID,
-  part_group_id UUID REFERENCES public."group" (id) ON DELETE SET NULL,
-  base_group_id UUID REFERENCES public."group" (id) ON DELETE SET NULL,
-  depth INTEGER NOT NULL DEFAULT 0,
-  path_group_ids UUID[] NOT NULL DEFAULT ARRAY[]::UUID[],
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (group_membership_id, origin_kind, source_group_id, connection_id, membership_rule_id, source_role_id)
-);
-
-CREATE INDEX idx_group_membership_origin_membership
-  ON public.group_membership_origin (group_membership_id);
-CREATE INDEX idx_group_membership_origin_source_group
-  ON public.group_membership_origin (source_group_id);
-CREATE INDEX idx_group_membership_origin_source_membership
-  ON public.group_membership_origin (source_membership_id);
-CREATE INDEX idx_group_membership_origin_connection
-  ON public.group_membership_origin (connection_id);
-CREATE INDEX idx_group_membership_origin_rule
-  ON public.group_membership_origin (membership_rule_id);
-CREATE INDEX idx_group_membership_origin_part_group
-  ON public.group_membership_origin (part_group_id);
-CREATE INDEX idx_group_membership_origin_base_group
-  ON public.group_membership_origin (base_group_id);
-
-ALTER TABLE public.group_membership_origin ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.group_membership_origin
-  FOR ALL TO service_role USING (true);
-
--- Offline group members (real-world members without platform signup)
-CREATE TABLE public.group_offline_member (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
-  first_name TEXT NOT NULL,
-  last_name TEXT NOT NULL,
-  reason_not_signed_up TEXT,
-  connected_user_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
-  created_by_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_group_offline_member_group ON public.group_offline_member (group_id);
-CREATE INDEX idx_group_offline_member_connected_user ON public.group_offline_member (connected_user_id);
-CREATE UNIQUE INDEX idx_group_offline_member_unique_connected_user
-  ON public.group_offline_member (group_id, connected_user_id)
-  WHERE connected_user_id IS NOT NULL;
-
-ALTER TABLE public.group_offline_member ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.group_offline_member FOR ALL TO service_role USING (true);
-
--- Offline group memberships
-CREATE TABLE public.group_offline_membership (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  group_offline_member_id UUID NOT NULL REFERENCES public.group_offline_member (id) ON DELETE CASCADE,
-  group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
-  status TEXT,
-  visibility TEXT NOT NULL DEFAULT 'public',
-  source TEXT NOT NULL DEFAULT 'direct',
-  source_group_id UUID REFERENCES public."group" (id) ON DELETE CASCADE,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (group_offline_member_id, group_id)
-);
-
-CREATE INDEX idx_group_offline_membership_group ON public.group_offline_membership (group_id);
-CREATE INDEX idx_group_offline_membership_member ON public.group_offline_membership (group_offline_member_id);
-CREATE INDEX idx_group_offline_membership_source_group ON public.group_offline_membership (source_group_id);
-
-ALTER TABLE public.group_offline_membership ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.group_offline_membership FOR ALL TO service_role USING (true);
-
--- Offline group membership roles
-CREATE TABLE public.group_offline_membership_role (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  group_offline_membership_id UUID NOT NULL REFERENCES public.group_offline_membership (id) ON DELETE CASCADE,
-  role_id UUID NOT NULL REFERENCES public.role (id) ON DELETE CASCADE,
-  assigned_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  assigned_by_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (group_offline_membership_id, role_id)
-);
-
-CREATE INDEX idx_group_offline_membership_role_membership ON public.group_offline_membership_role (group_offline_membership_id);
-CREATE INDEX idx_group_offline_membership_role_role ON public.group_offline_membership_role (role_id);
-CREATE INDEX idx_group_offline_membership_role_assigned_by ON public.group_offline_membership_role (assigned_by_id);
-
-ALTER TABLE public.group_offline_membership_role ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.group_offline_membership_role FOR ALL TO service_role USING (true);
-
--- Group membership roles table
-CREATE TABLE public.group_membership_role (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  group_membership_id UUID NOT NULL REFERENCES public.group_membership (id) ON DELETE CASCADE,
-  role_id UUID NOT NULL REFERENCES public.role (id) ON DELETE CASCADE,
-  assigned_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  assigned_by_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (group_membership_id, role_id)
-);
-
-CREATE INDEX idx_group_membership_role_membership ON public.group_membership_role (group_membership_id);
-CREATE INDEX idx_group_membership_role_role ON public.group_membership_role (role_id);
-CREATE INDEX idx_group_membership_role_assigned_by ON public.group_membership_role (assigned_by_id);
-
-ALTER TABLE public.group_membership_role ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.group_membership_role FOR ALL TO service_role USING (true);
-
--- Group guest access table
 CREATE TABLE public.group_guest_access (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  group_id UUID NOT NULL REFERENCES public."group" (id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  status TEXT NOT NULL DEFAULT 'invited' CHECK (status IN ('requested', 'invited', 'active', 'revoked')),
-  invited_by_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (group_id, user_id)
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    group_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    status text DEFAULT 'invited'::text NOT NULL,
+    invited_by_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT group_guest_access_status_check CHECK ((status = ANY (ARRAY['requested'::text, 'invited'::text, 'active'::text, 'revoked'::text]))),
+    CONSTRAINT group_guest_access_group_id_user_id_key UNIQUE (group_id, user_id),
+    CONSTRAINT group_guest_access_pkey PRIMARY KEY (id)
 );
 
-CREATE INDEX idx_group_guest_access_group ON public.group_guest_access (group_id);
-CREATE INDEX idx_group_guest_access_user ON public.group_guest_access (user_id);
-CREATE INDEX idx_group_guest_access_status ON public.group_guest_access (status);
-
-ALTER TABLE public.group_guest_access ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.group_guest_access FOR ALL TO service_role USING (true);
-
--- Group guest access roles table
 CREATE TABLE public.group_guest_role (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  group_guest_access_id UUID NOT NULL REFERENCES public.group_guest_access (id) ON DELETE CASCADE,
-  role_id UUID NOT NULL REFERENCES public.role (id) ON DELETE CASCADE,
-  assigned_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  assigned_by_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (group_guest_access_id, role_id)
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    group_guest_access_id uuid NOT NULL,
+    role_id uuid NOT NULL,
+    assigned_at timestamp with time zone DEFAULT now() NOT NULL,
+    assigned_by_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT group_guest_role_group_guest_access_id_role_id_key UNIQUE (group_guest_access_id, role_id),
+    CONSTRAINT group_guest_role_pkey PRIMARY KEY (id)
 );
 
-CREATE INDEX idx_group_guest_role_access ON public.group_guest_role (group_guest_access_id);
-CREATE INDEX idx_group_guest_role_role ON public.group_guest_role (role_id);
-CREATE INDEX idx_group_guest_role_assigned_by ON public.group_guest_role (assigned_by_id);
-
-ALTER TABLE public.group_guest_role ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.group_guest_role FOR ALL TO service_role USING (true);
-
--- Action right table
-CREATE TABLE public.action_right (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  resource TEXT,
-  action TEXT,
-  role_id UUID NOT NULL REFERENCES public.role (id) ON DELETE CASCADE,
-  group_id UUID,
-  event_id UUID,
-  amendment_id UUID,
-  blog_id UUID,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+CREATE TABLE public.group_membership (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    group_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    status text,
+    visibility text DEFAULT 'public'::text NOT NULL,
+    source text DEFAULT 'direct'::text NOT NULL,
+    source_group_id uuid,
+    origin_kind text DEFAULT 'direct'::text NOT NULL,
+    connection_id uuid,
+    membership_rule_id uuid,
+    part_group_id uuid,
+    base_group_id uuid,
+    is_auto_managed boolean DEFAULT false NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT group_membership_origin_kind_check CHECK ((origin_kind = ANY (ARRAY['direct'::text, 'hierarchy'::text, 'sibling_all_members'::text, 'sibling_role_members'::text, 'sibling_selected_source_groups'::text, 'manual_projection'::text]))),
+    CONSTRAINT group_membership_pkey PRIMARY KEY (id),
+    CONSTRAINT group_membership_user_id_group_id_key UNIQUE (user_id, group_id)
 );
 
-CREATE INDEX idx_action_right_role ON public.action_right (role_id);
-CREATE INDEX idx_zero_action_right_role_resource_action
-  ON public.action_right (role_id, resource, action);
+CREATE TABLE public.group_membership_origin (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    group_membership_id uuid NOT NULL,
+    origin_kind text NOT NULL,
+    source_group_id uuid,
+    source_membership_id uuid,
+    connection_id uuid,
+    membership_rule_id uuid,
+    source_role_id uuid,
+    part_group_id uuid,
+    base_group_id uuid,
+    depth integer DEFAULT 0 NOT NULL,
+    path_group_ids uuid[] DEFAULT ARRAY[]::uuid[] NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT group_membership_origin_origin_kind_check CHECK ((origin_kind = ANY (ARRAY['direct'::text, 'hierarchy'::text, 'sibling_all_members'::text, 'sibling_role_members'::text, 'sibling_selected_source_groups'::text, 'manual_projection'::text]))),
+    CONSTRAINT group_membership_origin_group_membership_id_origin_kind_sou_key UNIQUE (group_membership_id, origin_kind, source_group_id, connection_id, membership_rule_id, source_role_id),
+    CONSTRAINT group_membership_origin_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.group_membership_role (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    group_membership_id uuid NOT NULL,
+    role_id uuid NOT NULL,
+    assigned_at timestamp with time zone DEFAULT now() NOT NULL,
+    assigned_by_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    group_id uuid NOT NULL,
+    CONSTRAINT group_membership_role_group_membership_id_role_id_key UNIQUE (group_membership_id, role_id),
+    CONSTRAINT group_membership_role_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.group_offline_member (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    group_id uuid NOT NULL,
+    first_name text NOT NULL,
+    last_name text NOT NULL,
+    reason_not_signed_up text,
+    connected_user_id uuid,
+    created_by_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT group_offline_member_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.group_offline_membership (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    group_offline_member_id uuid NOT NULL,
+    group_id uuid NOT NULL,
+    status text,
+    visibility text DEFAULT 'public'::text NOT NULL,
+    source text DEFAULT 'direct'::text NOT NULL,
+    source_group_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT group_offline_membership_group_offline_member_id_group_id_key UNIQUE (group_offline_member_id, group_id),
+    CONSTRAINT group_offline_membership_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.group_offline_membership_role (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    group_offline_membership_id uuid NOT NULL,
+    role_id uuid NOT NULL,
+    assigned_at timestamp with time zone DEFAULT now() NOT NULL,
+    assigned_by_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT group_offline_membership_role_group_offline_membership_id_r_key UNIQUE (group_offline_membership_id, role_id),
+    CONSTRAINT group_offline_membership_role_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.role (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    name text,
+    description text,
+    scope text,
+    group_id uuid,
+    event_id uuid,
+    amendment_id uuid,
+    blog_id uuid,
+    assignment_mode text DEFAULT 'assigned'::text NOT NULL,
+    visibility text DEFAULT 'public'::text NOT NULL,
+    term_start_date timestamp with time zone,
+    is_recurring boolean DEFAULT false NOT NULL,
+    recurrence_pattern text,
+    recurrence_rule text,
+    recurrence_interval integer,
+    recurrence_days integer[],
+    recurrence_end_date timestamp with time zone,
+    scheduled_revote_date timestamp with time zone,
+    default_request_role boolean DEFAULT false NOT NULL,
+    default_invite_role boolean DEFAULT false NOT NULL,
+    assignee_kind text DEFAULT 'member'::text NOT NULL,
+    sort_order integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT role_assignee_kind_check CHECK ((assignee_kind = ANY (ARRAY['member'::text, 'guest'::text]))),
+    CONSTRAINT role_assignment_mode_check CHECK ((assignment_mode = ANY (ARRAY['assigned'::text, 'elected'::text]))),
+    CONSTRAINT role_visibility_check CHECK ((visibility = ANY (ARRAY['public'::text, 'authenticated'::text, 'private'::text]))),
+    CONSTRAINT role_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.role_holder_history (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    role_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    start_date timestamp with time zone,
+    end_date timestamp with time zone,
+    reason text,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT role_holder_history_pkey PRIMARY KEY (id)
+);
 
 ALTER TABLE public.action_right ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.action_right FOR ALL TO service_role USING (true);
 
+ALTER TABLE public."group" ENABLE ROW LEVEL SECURITY;
 
+ALTER TABLE public.group_activity ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.group_guest_access ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.group_guest_role ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.group_membership ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.group_membership_origin ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.group_membership_role ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.group_offline_member ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.group_offline_membership ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.group_offline_membership_role ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.role ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.role_holder_history ENABLE ROW LEVEL SECURITY;
+
+CREATE INDEX group_membership_role_studio_rights ON public.group_membership_role USING btree (group_id, role_id);
+
+CREATE INDEX group_tutorial_run_id_idx ON public."group" USING btree (tutorial_run_id);
+
+CREATE INDEX idx_action_right_role ON public.action_right USING btree (role_id);
+
+CREATE INDEX idx_group_activity_created ON public.group_activity USING btree (group_id, created_at DESC, id DESC);
+
+CREATE INDEX idx_group_activity_severity_created ON public.group_activity USING btree (group_id, severity, created_at DESC, id DESC);
+
+CREATE INDEX idx_group_connected_group ON public."group" USING btree (connected_group_id);
+
+CREATE INDEX idx_group_guest_access_group ON public.group_guest_access USING btree (group_id);
+
+CREATE INDEX idx_group_guest_access_status ON public.group_guest_access USING btree (status);
+
+CREATE INDEX idx_group_guest_access_user ON public.group_guest_access USING btree (user_id);
+
+CREATE INDEX idx_group_guest_role_access ON public.group_guest_role USING btree (group_guest_access_id);
+
+CREATE INDEX idx_group_guest_role_assigned_by ON public.group_guest_role USING btree (assigned_by_id);
+
+CREATE INDEX idx_group_guest_role_role ON public.group_guest_role USING btree (role_id);
+
+CREATE INDEX idx_group_hierarchy_children ON public."group" USING btree (has_hierarchy_children);
+
+CREATE INDEX idx_group_membership_base_group ON public.group_membership USING btree (base_group_id);
+
+CREATE INDEX idx_group_membership_connection ON public.group_membership USING btree (connection_id);
+
+CREATE INDEX idx_group_membership_group ON public.group_membership USING btree (group_id);
+
+CREATE INDEX idx_group_membership_group_status ON public.group_membership USING btree (group_id, status);
+
+CREATE INDEX idx_group_membership_membership_rule ON public.group_membership USING btree (membership_rule_id);
+
+CREATE INDEX idx_group_membership_origin_base_group ON public.group_membership_origin USING btree (base_group_id);
+
+CREATE INDEX idx_group_membership_origin_connection ON public.group_membership_origin USING btree (connection_id);
+
+CREATE INDEX idx_group_membership_origin_kind ON public.group_membership USING btree (origin_kind);
+
+CREATE INDEX idx_group_membership_origin_membership ON public.group_membership_origin USING btree (group_membership_id);
+
+CREATE INDEX idx_group_membership_origin_part_group ON public.group_membership_origin USING btree (part_group_id);
+
+CREATE INDEX idx_group_membership_origin_rule ON public.group_membership_origin USING btree (membership_rule_id);
+
+CREATE INDEX idx_group_membership_origin_source_group ON public.group_membership_origin USING btree (source_group_id);
+
+CREATE INDEX idx_group_membership_origin_source_membership ON public.group_membership_origin USING btree (source_membership_id);
+
+CREATE INDEX idx_group_membership_part_group ON public.group_membership USING btree (part_group_id);
+
+CREATE INDEX idx_group_membership_role_assigned_by ON public.group_membership_role USING btree (assigned_by_id);
+
+CREATE INDEX idx_group_membership_role_membership ON public.group_membership_role USING btree (group_membership_id);
+
+CREATE INDEX idx_group_membership_role_role ON public.group_membership_role USING btree (role_id);
+
+CREATE INDEX idx_group_membership_source_group ON public.group_membership USING btree (source_group_id);
+
+CREATE INDEX idx_group_membership_user ON public.group_membership USING btree (user_id);
+
+CREATE INDEX idx_group_membership_user_status ON public.group_membership USING btree (user_id, status);
+
+CREATE INDEX idx_group_offline_member_connected_user ON public.group_offline_member USING btree (connected_user_id);
+
+CREATE INDEX idx_group_offline_member_group ON public.group_offline_member USING btree (group_id);
+
+CREATE UNIQUE INDEX idx_group_offline_member_unique_connected_user ON public.group_offline_member USING btree (group_id, connected_user_id) WHERE (connected_user_id IS NOT NULL);
+
+CREATE INDEX idx_group_offline_membership_group ON public.group_offline_membership USING btree (group_id);
+
+CREATE INDEX idx_group_offline_membership_member ON public.group_offline_membership USING btree (group_offline_member_id);
+
+CREATE INDEX idx_group_offline_membership_role_assigned_by ON public.group_offline_membership_role USING btree (assigned_by_id);
+
+CREATE INDEX idx_group_offline_membership_role_membership ON public.group_offline_membership_role USING btree (group_offline_membership_id);
+
+CREATE INDEX idx_group_offline_membership_role_role ON public.group_offline_membership_role USING btree (role_id);
+
+CREATE INDEX idx_group_offline_membership_source_group ON public.group_offline_membership USING btree (source_group_id);
+
+CREATE INDEX idx_group_owner ON public."group" USING btree (owner_id);
+
+CREATE INDEX idx_group_sibling_connections ON public."group" USING btree (has_sibling_connections);
+
+CREATE INDEX idx_group_type ON public."group" USING btree (group_type);
+
+CREATE INDEX idx_role_assignee_kind ON public.role USING btree (assignee_kind);
+
+CREATE INDEX idx_role_event ON public.role USING btree (event_id);
+
+CREATE INDEX idx_role_group ON public.role USING btree (group_id);
+
+CREATE INDEX idx_role_holder_history_role ON public.role_holder_history USING btree (role_id);
+
+CREATE INDEX idx_role_holder_history_user ON public.role_holder_history USING btree (user_id);
+
+CREATE INDEX idx_role_scope ON public.role USING btree (scope);
+
+CREATE INDEX idx_zero_action_right_role_resource_action ON public.action_right USING btree (role_id, resource, action);
+
+CREATE INDEX idx_zero_group_membership_group_created_id ON public.group_membership USING btree (group_id, created_at DESC, id DESC);
+
+CREATE INDEX idx_zero_group_membership_user_created_id ON public.group_membership USING btree (user_id, created_at DESC, id DESC);
+
+CREATE INDEX idx_zero_role_amendment_scope_id ON public.role USING btree (amendment_id, scope, id);
+
+CREATE INDEX idx_zero_role_blog_scope_id ON public.role USING btree (blog_id, scope, id);
+
+CREATE INDEX idx_zero_role_group_scope_order_id ON public.role USING btree (group_id, scope, sort_order, id);
+
+CREATE INDEX idx_zero_role_holder_history_role_end_id ON public.role_holder_history USING btree (role_id, end_date, id);
+
+CREATE POLICY service_role_all ON public.action_right TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public."group" TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.group_activity TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.group_guest_access TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.group_guest_role TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.group_membership TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.group_membership_origin TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.group_membership_role TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.group_offline_member TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.group_offline_membership TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.group_offline_membership_role TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.role TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.role_holder_history TO service_role USING (true);

@@ -5,13 +5,8 @@ import { studioDocumentV3Schema } from '../../../src/features/communication-stud
 it('generates deterministic valid SQL templates for every supported agenda type', () => {
   const first = eventTemplateSqlRows();
   expect(
-    readFileSync('supabase/schemas/75_event_studio.sql', 'utf8').replace(/\r\n/g, '\n')
+    readFileSync('supabase/schemas/99_event_templates.sql', 'utf8').replace(/\r\n/g, '\n')
   ).toContain(first);
-  expect(readFileSync('supabase/migrations/20261011030000_event_intro.sql', 'utf8')).toContain(
-    first
-      .split('\n')[0]
-      .replace(/;$/, ' ON CONFLICT(kind) DO UPDATE SET document=EXCLUDED.document;')
-  );
   expect(eventTemplateSqlRows()).toBe(first);
   const rows = Array.from(first.matchAll(/\$template\$(.*?)\$template\$/g));
   expect(rows).toHaveLength(9);

@@ -3,11 +3,9 @@
 -- @covers schema 16_position_election.sql
 -- @covers schema 20_0_amendment_vote.sql
 -- @covers schema 20_1_amendment_choices_vote.sql
--- @covers schema 20_2_election_candidate_vote.sql
--- @covers schema 20_3_indicative_amendment_choice_vote.sql
--- @covers schema 20_4_indicative_election_candidate_vote.sql
 -- @covers schema 20_5_agenda_item_change_request.sql
 -- @covers schema 27_accreditation.sql
+-- @covers schema 90_foreign_keys.sql
 BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;

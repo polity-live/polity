@@ -18,6 +18,32 @@ import {
 } from '../../project-chat/access';
 
 it.each(['owner', 'outsider', 'anon', undefined])(
+  'resolves presentation access through its exact event without dropping predicates for %s',
+  userID => {
+    const eventId = '00000000-0000-4000-8000-000000000001';
+    const ast = queryAST(
+      studioQueries.eventPresentation.fn({ args: { eventId }, ctx: { userID } } as never)
+    );
+    expect(ast.table).toBe('event_presentation');
+    expect(ast.limit).toBe(1);
+    const parent = ast.where.conditions.find(
+      (condition: any) => condition.type === 'correlatedSubquery'
+    );
+    expect(parent.flip).toBe(true);
+    expect(parent.related.correlation).toEqual({ parentField: ['event_id'], childField: ['id'] });
+    const conditions = parent.related.subquery.where.conditions;
+    expect(conditions[0]).toMatchObject({
+      type: 'simple',
+      left: { name: 'id' },
+      op: '=',
+      right: { value: eventId },
+    });
+    const original = queryAST(applyEventQueryAccess(zql.event, userID)).where;
+    expect(conditions.slice(1)).toEqual(original.conditions);
+  }
+);
+
+it.each(['owner', 'outsider', 'anon', undefined])(
   'bounds workspace and proposal authorization to their exact project without changing access rules for %s',
   userID => {
     const projectId = '00000000-0000-4000-8000-000000000001';

@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 
 function expectRuntimeCleanupBeforeTutorialRun(source: string) {
@@ -23,7 +23,7 @@ describe('app tutorial cleanup order', () => {
 
   it.each([
     '../../../../supabase/schemas/33_app_tutorial.sql',
-    '../../../../supabase/migrations/20260922043912_initial_reset.sql',
+    `../../../../supabase/migrations/${readdirSync(new URL('../../../../supabase/migrations/', import.meta.url)).find(file => file.endsWith('_initial.sql'))}`,
   ])('uses the safe order in %s', path => {
     expectRuntimeCleanupBeforeTutorialRun(readFileSync(new URL(path, import.meta.url), 'utf8'));
   });

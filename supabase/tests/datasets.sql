@@ -1,4 +1,6 @@
 -- @covers schema 30_datasets.sql
+-- @covers schema 90_foreign_keys.sql
+-- @covers schema 91_triggers.sql
 BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;

@@ -1,69 +1,151 @@
--- Additive migration: original documents and IDs are preserved.
-SELECT pg_advisory_xact_lock(1886351981);
-ALTER TABLE public.studio_project DROP CONSTRAINT studio_project_kind_check;
-ALTER TABLE public.studio_project ADD CONSTRAINT studio_project_kind_check CHECK (kind IN ('single','event','carousel','story','video','campaign','whiteboard'));
-CREATE TABLE public.canvas_control (
- project_id uuid PRIMARY KEY REFERENCES public.studio_project(id) ON DELETE CASCADE,
- phase text NOT NULL DEFAULT 'edit' CHECK(phase IN ('edit','view','suggest_internal','vote_internal')),
- generation uuid NOT NULL DEFAULT gen_random_uuid()
-);
-CREATE TABLE public.canvas_history (
- id uuid PRIMARY KEY DEFAULT gen_random_uuid(), project_id uuid NOT NULL REFERENCES public.studio_project(id) ON DELETE CASCADE,
- revision integer NOT NULL, generation uuid NOT NULL, document jsonb NOT NULL,
- created_at bigint NOT NULL, UNIQUE(project_id,revision)
-);
-CREATE TABLE public.canvas_proposal (
- id uuid PRIMARY KEY, project_id uuid NOT NULL REFERENCES public.studio_project(id), owner_id uuid NOT NULL REFERENCES public."user"(id),
- shared_ids uuid[] NOT NULL DEFAULT '{}', title text NOT NULL, reason text NOT NULL DEFAULT '',
- base_document jsonb NOT NULL, base_revision integer NOT NULL, base_generation uuid NOT NULL,
- document jsonb NOT NULL, revision integer NOT NULL DEFAULT 0,
- state text NOT NULL DEFAULT 'draft' CHECK(state IN ('draft','submitted','voting','closed','withdrawn')),
- changes jsonb, checksum text, decision text CHECK(decision IN ('accepted','rejected')),
- application text NOT NULL DEFAULT 'pending' CHECK(application IN ('pending','applied','conflict','not_applicable')),
- conflicts jsonb NOT NULL DEFAULT '[]', electorate uuid[], deadline bigint,
- created_at bigint NOT NULL, updated_at bigint NOT NULL
-);
-CREATE INDEX canvas_proposal_project ON public.canvas_proposal(project_id,created_at);
-CREATE TABLE public.canvas_vote (
- proposal_id uuid NOT NULL REFERENCES public.canvas_proposal(id), user_id uuid NOT NULL REFERENCES public."user"(id),
- choice text NOT NULL CHECK(choice IN ('accept','reject','abstain')), created_at bigint NOT NULL,
- PRIMARY KEY(proposal_id,user_id)
-);
+-- 54_canvas_workflows.sql: canonical current definitions; historical upgrades are not replayed.
+
 CREATE TABLE public.canvas_comment (
- id uuid PRIMARY KEY, project_id uuid NOT NULL REFERENCES public.studio_project(id), proposal_id uuid REFERENCES public.canvas_proposal(id),
- author_id uuid NOT NULL REFERENCES public."user"(id), element_id text, body text NOT NULL CHECK(length(body) BETWEEN 1 AND 10000),
- resolved boolean NOT NULL DEFAULT false, created_at bigint NOT NULL, updated_at bigint NOT NULL
+    id uuid NOT NULL,
+    project_id uuid NOT NULL,
+    proposal_id uuid,
+    author_id uuid NOT NULL,
+    element_id text,
+    body text NOT NULL,
+    resolved boolean DEFAULT false NOT NULL,
+    created_at bigint NOT NULL,
+    updated_at bigint NOT NULL,
+    CONSTRAINT canvas_comment_body_check CHECK (((length(body) >= 1) AND (length(body) <= 10000))),
+    CONSTRAINT canvas_comment_pkey PRIMARY KEY (id)
 );
-CREATE TABLE public.canvas_receipt (
- id uuid PRIMARY KEY, project_id uuid NOT NULL REFERENCES public.studio_project(id), actor_id uuid NOT NULL REFERENCES public."user"(id),
- input_hash text NOT NULL, result jsonb NOT NULL, created_at bigint NOT NULL
+
+CREATE TABLE public.canvas_control (
+    project_id uuid NOT NULL,
+    phase text DEFAULT 'edit'::text NOT NULL,
+    generation uuid DEFAULT gen_random_uuid() NOT NULL,
+    CONSTRAINT canvas_control_phase_check CHECK ((phase = ANY (ARRAY['edit'::text, 'view'::text, 'suggest_internal'::text, 'vote_internal'::text]))),
+    CONSTRAINT canvas_control_pkey PRIMARY KEY (project_id)
 );
+
+CREATE TABLE public.canvas_history (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    project_id uuid NOT NULL,
+    revision integer NOT NULL,
+    generation uuid NOT NULL,
+    document jsonb NOT NULL,
+    created_at bigint NOT NULL,
+    CONSTRAINT canvas_history_pkey PRIMARY KEY (id),
+    CONSTRAINT canvas_history_project_id_revision_key UNIQUE (project_id, revision)
+);
+
 CREATE TABLE public.canvas_library (
- id uuid PRIMARY KEY DEFAULT gen_random_uuid(), project_id uuid NOT NULL REFERENCES public.studio_project(id),
- name text NOT NULL, content jsonb NOT NULL, created_by uuid NOT NULL REFERENCES public."user"(id), created_at bigint NOT NULL
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    project_id uuid NOT NULL,
+    name text NOT NULL,
+    content jsonb NOT NULL,
+    created_by uuid NOT NULL,
+    created_at bigint NOT NULL,
+    CONSTRAINT canvas_library_pkey PRIMARY KEY (id)
 );
-CREATE FUNCTION public.canvas_manage(actor uuid,pid uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$
- SELECT EXISTS(SELECT 1 FROM studio_project p WHERE p.id=pid AND
- ((p.group_id IS NULL AND p.owner_id=actor) OR EXISTS(SELECT 1 FROM "group" g WHERE g.id=p.group_id AND g.owner_id=actor)
- OR EXISTS(SELECT 1 FROM group_membership m WHERE m.group_id=p.group_id AND m.user_id=actor AND m.status IN ('active','member','admin') AND
- (m.status='admin' OR EXISTS(SELECT 1 FROM group_membership_role mr JOIN action_right a ON a.role_id=mr.role_id WHERE mr.group_membership_id=m.id AND a.group_id=p.group_id AND a.action='manage' AND a.resource IN ('groups','communicationStudio'))))));
+
+CREATE TABLE public.canvas_proposal (
+    id uuid NOT NULL,
+    project_id uuid NOT NULL,
+    owner_id uuid NOT NULL,
+    shared_ids uuid[] DEFAULT '{}'::uuid[] NOT NULL,
+    title text NOT NULL,
+    reason text DEFAULT ''::text NOT NULL,
+    base_document jsonb NOT NULL,
+    base_revision integer NOT NULL,
+    base_generation uuid NOT NULL,
+    document jsonb NOT NULL,
+    revision integer DEFAULT 0 NOT NULL,
+    state text DEFAULT 'draft'::text NOT NULL,
+    changes jsonb,
+    checksum text,
+    decision text,
+    application text DEFAULT 'pending'::text NOT NULL,
+    conflicts jsonb DEFAULT '[]'::jsonb NOT NULL,
+    electorate uuid[],
+    deadline bigint,
+    created_at bigint NOT NULL,
+    updated_at bigint NOT NULL,
+    resolves_id uuid,
+    origin text DEFAULT 'human'::text NOT NULL,
+    ai_mode text,
+    ai_status text DEFAULT 'ready'::text NOT NULL,
+    ai_request_key text,
+    ai_sources jsonb DEFAULT '[]'::jsonb NOT NULL,
+    ai_warnings jsonb DEFAULT '[]'::jsonb NOT NULL,
+    CONSTRAINT canvas_proposal_ai_mode_check CHECK ((ai_mode = ANY (ARRAY['template'::text, 'free'::text]))),
+    CONSTRAINT canvas_proposal_ai_status_check CHECK ((ai_status = ANY (ARRAY['generating'::text, 'ready'::text]))),
+    CONSTRAINT canvas_proposal_application_check CHECK ((application = ANY (ARRAY['pending'::text, 'applied'::text, 'conflict'::text, 'not_applicable'::text, 'superseded'::text]))),
+    CONSTRAINT canvas_proposal_decision_check CHECK ((decision = ANY (ARRAY['accepted'::text, 'rejected'::text]))),
+    CONSTRAINT canvas_proposal_origin_check CHECK ((origin = ANY (ARRAY['human'::text, 'ai'::text]))),
+    CONSTRAINT canvas_proposal_state_check CHECK ((state = ANY (ARRAY['draft'::text, 'submitted'::text, 'voting'::text, 'closed'::text, 'withdrawn'::text]))),
+    CONSTRAINT canvas_proposal_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.canvas_receipt (
+    id uuid NOT NULL,
+    project_id uuid NOT NULL,
+    actor_id uuid NOT NULL,
+    input_hash text NOT NULL,
+    result jsonb NOT NULL,
+    created_at bigint NOT NULL,
+    CONSTRAINT canvas_receipt_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.canvas_vote (
+    proposal_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    choice text NOT NULL,
+    created_at bigint NOT NULL,
+    CONSTRAINT canvas_vote_choice_check CHECK ((choice = ANY (ARRAY['accept'::text, 'reject'::text, 'abstain'::text]))),
+    CONSTRAINT canvas_vote_pkey PRIMARY KEY (proposal_id, user_id)
+);
+
+ALTER TABLE public.canvas_comment ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.canvas_control ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.canvas_history ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.canvas_library ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.canvas_proposal ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.canvas_receipt ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.canvas_vote ENABLE ROW LEVEL SECURITY;
+
+CREATE FUNCTION public.canvas_manage(actor uuid, pid uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+ SELECT coalesce((SELECT CASE WHEN p.event_id IS NOT NULL THEN event_studio_can_manage(actor,p.event_id)
+ ELSE canvas_manage_without_events(actor,pid) END FROM studio_project p WHERE p.id=pid),false);
 $$;
-CREATE FUNCTION public.canvas_proposal_access(actor uuid,wid uuid) RETURNS boolean LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$
- SELECT EXISTS(SELECT 1 FROM canvas_proposal w WHERE w.id=wid AND studio_access(actor,w.project_id,false) AND (w.state<>'draft' OR w.owner_id=actor OR actor=ANY(w.shared_ids)));
+
+CREATE FUNCTION public.canvas_manage_without_events(actor uuid, pid uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+ SELECT EXISTS(SELECT 1 FROM public.studio_project p WHERE p.id=pid AND
+   ((p.group_id IS NULL AND p.owner_id=actor) OR
+    (p.group_id IS NOT NULL AND (p.owner_id=actor OR public.studio_group_access(actor,p.group_id,true)))));
 $$;
-REVOKE ALL ON FUNCTION public.canvas_manage(uuid,uuid),public.canvas_proposal_access(uuid,uuid) FROM PUBLIC,anon,authenticated;
-GRANT EXECUTE ON FUNCTION public.canvas_manage(uuid,uuid),public.canvas_proposal_access(uuid,uuid) TO service_role;
-DO $$ DECLARE t text; BEGIN
- FOREACH t IN ARRAY ARRAY['canvas_control','canvas_history','canvas_proposal','canvas_vote','canvas_comment','canvas_receipt','canvas_library'] LOOP
- EXECUTE format('ALTER TABLE public.%I ENABLE ROW LEVEL SECURITY',t);
- EXECUTE format('REVOKE ALL ON public.%I FROM anon,authenticated',t);
- EXECUTE format('GRANT ALL ON public.%I TO service_role',t);
- END LOOP;
-END $$;
-INSERT INTO canvas_control(project_id) SELECT id FROM studio_project;
-INSERT INTO canvas_history(project_id,revision,generation,document,created_at)
- SELECT s.project_id,s.content_revision,c.generation,s.document,s.updated_at FROM studio_state s JOIN canvas_control c USING(project_id);
-CREATE FUNCTION public.canvas_record_revision() RETURNS trigger LANGUAGE plpgsql SET search_path=public AS $$
+
+CREATE FUNCTION public.canvas_proposal_access(actor uuid, wid uuid) RETURNS boolean
+    LANGUAGE sql STABLE SECURITY DEFINER
+    SET search_path TO 'public'
+    AS $$
+ SELECT EXISTS(SELECT 1 FROM public.canvas_proposal w
+ JOIN public.studio_project p ON p.id=w.project_id
+ WHERE w.id=wid AND public.studio_collaboration_access(actor,w.project_id)
+ AND (w.checksum IS NOT NULL OR w.owner_id=actor OR actor=ANY(w.shared_ids)
+   OR (w.origin='ai' AND p.group_id IS NULL AND public.canvas_manage(actor,w.project_id))));
+$$;
+
+CREATE FUNCTION public.canvas_record_revision() RETURNS trigger
+    LANGUAGE plpgsql
+    SET search_path TO 'public'
+    AS $$
  DECLARE g uuid; phase_name text;
  BEGIN
  INSERT INTO canvas_control(project_id) VALUES(NEW.project_id) ON CONFLICT DO NOTHING;
@@ -73,9 +155,7 @@ CREATE FUNCTION public.canvas_record_revision() RETURNS trigger LANGUAGE plpgsql
  INSERT INTO canvas_history(project_id,revision,generation,document,created_at) VALUES(NEW.project_id,NEW.content_revision,g,NEW.document,NEW.updated_at) ON CONFLICT DO NOTHING;
  RETURN NEW;
  END $$;
-CREATE TRIGGER canvas_record_revision AFTER INSERT OR UPDATE ON studio_state FOR EACH ROW EXECUTE FUNCTION canvas_record_revision();
-CREATE OR REPLACE FUNCTION public.studio_realtime_access(topic text) RETURNS boolean
-LANGUAGE sql STABLE SECURITY DEFINER SET search_path=public AS $$
- SELECT CASE WHEN topic ~ '^studio:[0-9a-f-]{36}$' THEN studio_access(auth.uid(),substring(topic from 8)::uuid,false)
- WHEN topic ~ '^canvas-proposal:[0-9a-f-]{36}$' THEN canvas_proposal_access(auth.uid(),substring(topic from 17)::uuid) ELSE false END;
-$$;
+
+CREATE UNIQUE INDEX canvas_proposal_ai_request_key ON public.canvas_proposal USING btree (ai_request_key) WHERE (ai_request_key IS NOT NULL);
+
+CREATE INDEX canvas_proposal_project ON public.canvas_proposal USING btree (project_id, created_at);

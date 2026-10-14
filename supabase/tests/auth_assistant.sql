@@ -1,5 +1,7 @@
 -- @covers schema 22_functions.sql
 -- @covers schema 24_user_preference.sql
+-- @covers schema 90_foreign_keys.sql
+-- @covers schema 91_triggers.sql
 BEGIN;
 
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;

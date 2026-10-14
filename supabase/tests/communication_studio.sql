@@ -1,10 +1,9 @@
 -- @covers schema 36_communication_studio.sql
 -- @covers schema 63_studio_v4_themes_elements.sql
--- @covers schema 64_studio_document_v5.sql
--- @covers schema 65_studio_export_mime_types.sql
 -- @covers schema 67_personal_studio_collaborators.sql
 -- @covers schema 68_group_studio_project_rights.sql
 -- @covers schema 69_retire_whiteboards.sql
+-- @covers schema 90_foreign_keys.sql
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
 SELECT plan(23);
@@ -55,7 +54,7 @@ SELECT ok(NOT has_table_privilege('authenticated','public.studio_asset','SELECT'
 SELECT ok(NOT has_table_privilege('authenticated','public.studio_export','INSERT'),'Export requests require server authorization');
 SELECT ok(EXISTS(SELECT 1 FROM storage.buckets WHERE id='studio'),'Media bucket exists');
 SELECT is((SELECT public FROM storage.buckets WHERE id='studio'),false,'Media bucket is private');
-SELECT is((SELECT file_size_limit FROM storage.buckets WHERE id='studio'),104857600::bigint,'Media bucket accepts 100 MiB files');
+SELECT is((SELECT file_size_limit FROM storage.buckets WHERE id='studio'),52428800::bigint,'Media bucket accepts 50 MiB files');
 SELECT is(
   (SELECT array_agg(mime ORDER BY mime) FROM storage.buckets,unnest(allowed_mime_types) mime WHERE id='studio'),
   ARRAY['application/pdf','application/vnd.openxmlformats-officedocument.presentationml.presentation','application/vnd.openxmlformats-officedocument.spreadsheetml.sheet','application/zip','audio/mpeg','audio/wav','image/jpeg','image/png','image/webp','video/mp4']::text[],

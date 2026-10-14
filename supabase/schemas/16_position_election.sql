@@ -1,157 +1,177 @@
--- =============================================================================
--- 16_election.sql — Elections, candidates, electors, and voting tables
--- Depends on: 01_user (user), 02_group (role), 03_event (event), 06_agenda (agenda_item)
--- =============================================================================
+-- 16_position_election.sql: canonical current definitions; historical upgrades are not replayed.
 
--- Election table (modified: removed amendment_id, is_multiple_choice, max_selections,
--- voting_start_time, voting_end_time; added closing_type, closing_duration_seconds,
--- closing_end_time, max_votes)
 CREATE TABLE public.election (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  agenda_item_id UUID,
-  role_id UUID REFERENCES public.role (id) ON DELETE SET NULL,
-  title TEXT,
-  description TEXT,
-  status TEXT,
-  majority_type TEXT,
-  closing_type TEXT,
-  closing_duration_seconds INTEGER,
-  closing_end_time TIMESTAMPTZ,
-  visibility VARCHAR NOT NULL DEFAULT 'public',
-  ballot_visibility TEXT NOT NULL DEFAULT 'secret' CHECK (ballot_visibility IN ('named', 'secret')),
-  election_mode TEXT NOT NULL DEFAULT 'single',
-  seat_count INTEGER NOT NULL DEFAULT 1,
-  max_votes INTEGER NOT NULL DEFAULT 1,
-  electorate_snapshotted_at TIMESTAMPTZ,
-  offline_electorate_size INTEGER NOT NULL DEFAULT 0 CHECK (offline_electorate_size >= 0),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    agenda_item_id uuid,
+    role_id uuid,
+    title text,
+    description text,
+    status text,
+    majority_type text,
+    closing_type text,
+    closing_duration_seconds integer,
+    closing_end_time timestamp with time zone,
+    visibility character varying DEFAULT 'public'::character varying NOT NULL,
+    ballot_visibility text DEFAULT 'secret'::text NOT NULL,
+    election_mode text DEFAULT 'single'::text NOT NULL,
+    seat_count integer DEFAULT 1 NOT NULL,
+    max_votes integer DEFAULT 1 NOT NULL,
+    electorate_snapshotted_at timestamp with time zone,
+    offline_electorate_size integer DEFAULT 0 NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT election_ballot_visibility_check CHECK ((ballot_visibility = ANY (ARRAY['named'::text, 'secret'::text]))),
+    CONSTRAINT election_offline_electorate_size_check CHECK ((offline_electorate_size >= 0)),
+    CONSTRAINT election_pkey PRIMARY KEY (id)
 );
 
-CREATE INDEX idx_election_agenda_item ON public.election (agenda_item_id);
-CREATE INDEX idx_election_role_id ON public.election (role_id);
-CREATE INDEX idx_zero_election_created_id ON public.election (created_at DESC, id DESC);
+CREATE TABLE public.election_candidate (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    election_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    name text,
+    description text,
+    image_url text,
+    status text DEFAULT 'nominated'::text NOT NULL,
+    order_index integer,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT election_candidate_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.election_offline_tally (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    election_id uuid NOT NULL,
+    phase text NOT NULL,
+    candidate_id uuid NOT NULL,
+    count integer DEFAULT 0 NOT NULL,
+    updated_by_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    updated_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT election_offline_tally_count_check CHECK ((count >= 0)),
+    CONSTRAINT election_offline_tally_phase_check CHECK ((phase = ANY (ARRAY['indicative'::text, 'final'::text]))),
+    CONSTRAINT election_offline_tally_election_id_phase_candidate_id_key UNIQUE (election_id, phase, candidate_id),
+    CONSTRAINT election_offline_tally_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.elector (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    election_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    participation_channel text DEFAULT 'online'::text NOT NULL,
+    snapshotted_at timestamp with time zone DEFAULT now() NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT elector_participation_channel_check CHECK ((participation_channel = ANY (ARRAY['online'::text, 'offline'::text]))),
+    CONSTRAINT elector_election_id_user_id_key UNIQUE (election_id, user_id),
+    CONSTRAINT elector_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.final_candidate_selection (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    election_id uuid NOT NULL,
+    candidate_id uuid NOT NULL,
+    elector_participation_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT final_candidate_selection_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.final_elector_participation (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    election_id uuid NOT NULL,
+    elector_id uuid NOT NULL,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT final_elector_participation_election_id_elector_id_key UNIQUE (election_id, elector_id),
+    CONSTRAINT final_elector_participation_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.indicative_candidate_selection (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    election_id uuid NOT NULL,
+    candidate_id uuid NOT NULL,
+    elector_participation_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT indicative_candidate_selection_pkey PRIMARY KEY (id)
+);
+
+CREATE TABLE public.indicative_elector_participation (
+    id uuid DEFAULT gen_random_uuid() NOT NULL,
+    election_id uuid NOT NULL,
+    user_id uuid NOT NULL,
+    elector_id uuid,
+    created_at timestamp with time zone DEFAULT now() NOT NULL,
+    CONSTRAINT indicative_elector_participation_election_id_user_id_key UNIQUE (election_id, user_id),
+    CONSTRAINT indicative_elector_participation_pkey PRIMARY KEY (id)
+);
 
 ALTER TABLE public.election ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.election FOR ALL TO service_role USING (true);
-
--- Election candidate table (unchanged)
-CREATE TABLE public.election_candidate (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  election_id UUID NOT NULL REFERENCES public.election (id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  name TEXT,
-  description TEXT,
-  image_url TEXT,
-  status TEXT NOT NULL DEFAULT 'nominated',
-  order_index INTEGER,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_election_candidate_election ON public.election_candidate (election_id);
-CREATE INDEX idx_election_candidate_user ON public.election_candidate (user_id);
-CREATE INDEX idx_zero_election_candidate_election_order_id
-  ON public.election_candidate (election_id, order_index, id);
 
 ALTER TABLE public.election_candidate ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.election_candidate FOR ALL TO service_role USING (true);
-
--- Elector table (new: auto-populated from accredited participants)
-CREATE TABLE public.elector (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  election_id UUID NOT NULL REFERENCES public.election (id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  participation_channel TEXT NOT NULL DEFAULT 'online' CHECK (participation_channel IN ('online', 'offline')),
-  snapshotted_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (election_id, user_id)
-);
-
-CREATE INDEX idx_elector_election ON public.elector (election_id);
-CREATE INDEX idx_elector_user ON public.elector (user_id);
-
-ALTER TABLE public.elector ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.elector FOR ALL TO service_role USING (true);
-
--- Indicative elector participation (new: tracks that an elector voted in indicative phase)
-CREATE TABLE public.indicative_elector_participation (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  election_id UUID NOT NULL REFERENCES public.election (id) ON DELETE CASCADE,
-  user_id UUID NOT NULL REFERENCES public."user" (id) ON DELETE CASCADE,
-  elector_id UUID REFERENCES public.elector (id) ON DELETE SET NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (election_id, user_id)
-);
-
-CREATE INDEX idx_indicative_elector_participation_election ON public.indicative_elector_participation (election_id);
-CREATE INDEX idx_indicative_elector_participation_elector ON public.indicative_elector_participation (elector_id);
-CREATE INDEX idx_indicative_elector_participation_user ON public.indicative_elector_participation (user_id);
-
-ALTER TABLE public.indicative_elector_participation ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.indicative_elector_participation FOR ALL TO service_role USING (true);
-
--- Indicative candidate selection (new: the actual vote — links participation to candidate)
-CREATE TABLE public.indicative_candidate_selection (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  election_id UUID NOT NULL REFERENCES public.election (id) ON DELETE CASCADE,
-  candidate_id UUID NOT NULL REFERENCES public.election_candidate (id) ON DELETE CASCADE,
-  elector_participation_id UUID REFERENCES public.indicative_elector_participation (id) ON DELETE CASCADE,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_indicative_candidate_selection_election ON public.indicative_candidate_selection (election_id);
-CREATE INDEX idx_indicative_candidate_selection_candidate ON public.indicative_candidate_selection (candidate_id);
-CREATE INDEX idx_indicative_candidate_selection_participation ON public.indicative_candidate_selection (elector_participation_id);
-
-ALTER TABLE public.indicative_candidate_selection ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.indicative_candidate_selection FOR ALL TO service_role USING (true);
-
--- Final elector participation (new: tracks that an elector voted in final phase)
-CREATE TABLE public.final_elector_participation (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  election_id UUID NOT NULL REFERENCES public.election (id) ON DELETE CASCADE,
-  elector_id UUID NOT NULL REFERENCES public.elector (id) ON DELETE CASCADE,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (election_id, elector_id)
-);
-
-CREATE INDEX idx_final_elector_participation_election ON public.final_elector_participation (election_id);
-CREATE INDEX idx_final_elector_participation_elector ON public.final_elector_participation (elector_id);
-
-ALTER TABLE public.final_elector_participation ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.final_elector_participation FOR ALL TO service_role USING (true);
-
--- Final candidate selection (new: the actual vote — links participation to candidate)
-CREATE TABLE public.final_candidate_selection (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  election_id UUID NOT NULL REFERENCES public.election (id) ON DELETE CASCADE,
-  candidate_id UUID NOT NULL REFERENCES public.election_candidate (id) ON DELETE CASCADE,
-  elector_participation_id UUID REFERENCES public.final_elector_participation (id) ON DELETE CASCADE,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
-);
-
-CREATE INDEX idx_final_candidate_selection_election ON public.final_candidate_selection (election_id);
-CREATE INDEX idx_final_candidate_selection_candidate ON public.final_candidate_selection (candidate_id);
-CREATE INDEX idx_final_candidate_selection_participation ON public.final_candidate_selection (elector_participation_id);
-
-ALTER TABLE public.final_candidate_selection ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.final_candidate_selection FOR ALL TO service_role USING (true);
-
--- Aggregated offline tallies per election phase and candidate
-CREATE TABLE public.election_offline_tally (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  election_id UUID NOT NULL REFERENCES public.election (id) ON DELETE CASCADE,
-  phase TEXT NOT NULL CHECK (phase IN ('indicative', 'final')),
-  candidate_id UUID NOT NULL REFERENCES public.election_candidate (id) ON DELETE CASCADE,
-  count INTEGER NOT NULL DEFAULT 0 CHECK (count >= 0),
-  updated_by_id UUID REFERENCES public."user" (id) ON DELETE SET NULL,
-  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
-  UNIQUE (election_id, phase, candidate_id)
-);
-
-CREATE INDEX idx_election_offline_tally_election ON public.election_offline_tally (election_id);
-CREATE INDEX idx_election_offline_tally_candidate ON public.election_offline_tally (candidate_id);
 
 ALTER TABLE public.election_offline_tally ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "service_role_all" ON public.election_offline_tally FOR ALL TO service_role USING (true);
+
+ALTER TABLE public.elector ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.final_candidate_selection ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.final_elector_participation ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.indicative_candidate_selection ENABLE ROW LEVEL SECURITY;
+
+ALTER TABLE public.indicative_elector_participation ENABLE ROW LEVEL SECURITY;
+
+CREATE INDEX idx_election_agenda_item ON public.election USING btree (agenda_item_id);
+
+CREATE INDEX idx_election_candidate_election ON public.election_candidate USING btree (election_id);
+
+CREATE INDEX idx_election_candidate_user ON public.election_candidate USING btree (user_id);
+
+CREATE INDEX idx_election_offline_tally_candidate ON public.election_offline_tally USING btree (candidate_id);
+
+CREATE INDEX idx_election_offline_tally_election ON public.election_offline_tally USING btree (election_id);
+
+CREATE INDEX idx_election_role_id ON public.election USING btree (role_id);
+
+CREATE INDEX idx_elector_election ON public.elector USING btree (election_id);
+
+CREATE INDEX idx_elector_user ON public.elector USING btree (user_id);
+
+CREATE INDEX idx_final_candidate_selection_candidate ON public.final_candidate_selection USING btree (candidate_id);
+
+CREATE INDEX idx_final_candidate_selection_election ON public.final_candidate_selection USING btree (election_id);
+
+CREATE INDEX idx_final_candidate_selection_participation ON public.final_candidate_selection USING btree (elector_participation_id);
+
+CREATE INDEX idx_final_elector_participation_election ON public.final_elector_participation USING btree (election_id);
+
+CREATE INDEX idx_final_elector_participation_elector ON public.final_elector_participation USING btree (elector_id);
+
+CREATE INDEX idx_indicative_candidate_selection_candidate ON public.indicative_candidate_selection USING btree (candidate_id);
+
+CREATE INDEX idx_indicative_candidate_selection_election ON public.indicative_candidate_selection USING btree (election_id);
+
+CREATE INDEX idx_indicative_candidate_selection_participation ON public.indicative_candidate_selection USING btree (elector_participation_id);
+
+CREATE INDEX idx_indicative_elector_participation_election ON public.indicative_elector_participation USING btree (election_id);
+
+CREATE INDEX idx_indicative_elector_participation_elector ON public.indicative_elector_participation USING btree (elector_id);
+
+CREATE INDEX idx_indicative_elector_participation_user ON public.indicative_elector_participation USING btree (user_id);
+
+CREATE INDEX idx_zero_election_candidate_election_order_id ON public.election_candidate USING btree (election_id, order_index, id);
+
+CREATE INDEX idx_zero_election_created_id ON public.election USING btree (created_at DESC, id DESC);
+
+CREATE POLICY service_role_all ON public.election TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.election_candidate TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.election_offline_tally TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.elector TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.final_candidate_selection TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.final_elector_participation TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.indicative_candidate_selection TO service_role USING (true);
+
+CREATE POLICY service_role_all ON public.indicative_elector_participation TO service_role USING (true);

@@ -12,6 +12,7 @@ import {
   SECURITY_SHARD_COUNT,
   TOTAL_SHARD_COUNT,
   type Workload,
+  measurementMatrix,
 } from '../sharding';
 import { securityScenarios, securityCaseManifest } from '../security';
 
@@ -37,6 +38,16 @@ const manifest = () =>
   );
 
 describe('distributed Zero workload planning', () => {
+  it('starts the browser early while preserving every assignment and the immutable manifest order', () => {
+    const original = manifest();
+    const before = original.shards.map(shard => ({ shard: shard.id, layer: shard.layer }));
+    const matrix = measurementMatrix(original.shards);
+    expect(matrix.include[0]).toEqual({ shard: 'journeys', layer: 'journeys' });
+    expect(matrix.include.slice(1)).toEqual(before.filter(shard => shard.layer !== 'journeys'));
+    expect(original.shards.map(shard => ({ shard: shard.id, layer: shard.layer }))).toEqual(before);
+    expect(matrix.include).toHaveLength(TOTAL_SHARD_COUNT);
+    validateManifest(original);
+  });
   it('preserves the manifest checksum through JSON transport with optional fields', () => {
     for (const hasBase of [true, false]) {
       const result = createManifest(
@@ -57,9 +68,12 @@ describe('distributed Zero workload planning', () => {
   it('covers every query variant, keeps all variants of a query together, and covers security once', () => {
     const result = manifest();
     expect(QUERY_SHARD_COUNT).toBe(64);
-    expect(SECURITY_SHARD_COUNT).toBe(2);
-    expect(TOTAL_SHARD_COUNT).toBe(68);
-    expect(result.shards).toHaveLength(68);
+    expect(SECURITY_SHARD_COUNT).toBe(8);
+    expect(TOTAL_SHARD_COUNT).toBe(74);
+    expect(result.shards).toHaveLength(74);
+    expect(
+      result.shards.filter(shard => shard.layer === 'security').map(shard => shard.id)
+    ).toEqual(Array.from({ length: 8 }, (_, index) => `security-${index + 1}`));
     expect(result.shards.filter(shard => shard.layer === 'queries').map(shard => shard.id)).toEqual(
       Array.from({ length: 64 }, (_, index) => `queries-${index + 1}`)
     );
@@ -112,7 +126,7 @@ describe('distributed Zero workload planning', () => {
     for (const [valid, invalid] of [
       ['queries-64', 'queries-65'],
       ['queries-64', 'queries-064'],
-      ['security-2', 'security-3'],
+      ['security-8', 'security-9'],
     ]) {
       const value = manifest();
       value.shards.find(shard => shard.id === valid)!.id = invalid;

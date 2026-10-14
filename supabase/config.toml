@@ -7,6 +7,69 @@ schemas = ["public"]
 port = 54322
 major_version = 17
 
+[db.migrations]
+# Canonical DDL first; permissions, cron jobs and required data last.
+schema_paths = [
+  "./schemas/00_extensions.sql",
+  "./schemas/01_user.sql",
+  "./schemas/02_group.sql",
+  "./schemas/03_event.sql",
+  "./schemas/04_document.sql",
+  "./schemas/05_1_network.sql",
+  "./schemas/05_2_amendment.sql",
+  "./schemas/06_agenda.sql",
+  "./schemas/07_blog.sql",
+  "./schemas/08_todo.sql",
+  "./schemas/09_message.sql",
+  "./schemas/10_notification.sql",
+  "./schemas/11_statement.sql",
+  "./schemas/12_payment.sql",
+  "./schemas/14_change_request.sql",
+  "./schemas/15_discussion.sql",
+  "./schemas/16_position_election.sql",
+  "./schemas/18_delegate.sql",
+  "./schemas/20_0_amendment_vote.sql",
+  "./schemas/20_1_amendment_choices_vote.sql",
+  "./schemas/20_5_agenda_item_change_request.sql",
+  "./schemas/21_common.sql",
+  "./schemas/21_search_document.sql",
+  "./schemas/22_functions.sql",
+  "./schemas/23_appearance_theme.sql",
+  "./schemas/24_user_preference.sql",
+  "./schemas/25_currency.sql",
+  "./schemas/26_voting_password.sql",
+  "./schemas/27_accreditation.sql",
+  "./schemas/28_ai.sql",
+  "./schemas/29_pql_filter.sql",
+  "./schemas/30_datasets.sql",
+  "./schemas/32_newsletter.sql",
+  "./schemas/33_app_tutorial.sql",
+  "./schemas/36_communication_studio.sql",
+  "./schemas/49_studio_zero.sql",
+  "./schemas/50_studio_editor_actions.sql",
+  "./schemas/54_canvas_workflows.sql",
+  "./schemas/55_canvas_capabilities.sql",
+  "./schemas/56_canvas_authority_lock.sql",
+  "./schemas/59_canvas_zero_workspaces.sql",
+  "./schemas/63_studio_v4_themes_elements.sql",
+  "./schemas/67_personal_studio_collaborators.sql",
+  "./schemas/68_group_studio_project_rights.sql",
+  "./schemas/69_retire_whiteboards.sql",
+  "./schemas/70_studio_visibility_discovery.sql",
+  "./schemas/73_ai_traces.sql",
+  "./schemas/74_studio_zero_commands.sql",
+  "./schemas/75_event_studio.sql",
+  "./schemas/76_group_email_invitations.sql",
+  "./schemas/90_foreign_keys.sql",
+  "./schemas/91_triggers.sql",
+  "./schemas/92_managed_policies.sql",
+  "./schemas/31_service_role_grants.sql",
+  "./schemas/35_security.sql",
+  "./schemas/34_scheduled_jobs.sql",
+  "./schemas/98_publications.sql",
+  "./schemas/99_event_templates.sql",
+]
+
 [db.seed]
 enabled = true
 sql_paths = [
@@ -81,7 +144,7 @@ skip_nonce_check = false
 
 [storage]
 enabled = true
-file_size_limit = "100MiB"
+file_size_limit = "50MiB"
 
 [storage.vector]
 enabled = false
@@ -98,7 +161,7 @@ allowed_mime_types = ["image/png", "image/jpeg", "image/gif", "image/webp", "ima
 
 [storage.buckets.studio]
 public = false
-file_size_limit = "100MiB"
+file_size_limit = "50MiB"
 allowed_mime_types = ["audio/mpeg", "audio/wav", "image/png", "image/jpeg", "image/webp", "video/mp4", "application/pdf", "application/zip", "application/vnd.openxmlformats-officedocument.presentationml.presentation", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"]
 
 [storage.buckets.dataset-snapshots]

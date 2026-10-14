@@ -352,6 +352,52 @@ describe('original navigation frame diagnostics', () => {
 });
 
 describe('navigation paint measurement', () => {
+  it('uses native visibility including opacity and skipped content at the real paint frame', () => {
+    const clock = vi.spyOn(performance, 'now').mockReturnValue(10);
+    history.replaceState(null, '', '/target');
+    document.body.innerHTML = '<main><h1>Target</h1></main>';
+    const { scope, frame } = probe();
+    const native = vi.fn(() => false);
+    Object.defineProperty(document.querySelector('h1')!, 'checkVisibility', { value: native });
+    const styles = vi.spyOn(globalThis, 'getComputedStyle');
+    const rects = vi.spyOn(Element.prototype, 'getClientRects');
+    scope.__beginBenchmarkNavigation({ path: '/target', text: 'Target', contentSelector: 'main' });
+    expect(native).not.toHaveBeenCalled();
+    frame();
+    expect(native).toHaveBeenCalledWith({
+      checkOpacity: true,
+      checkVisibilityCSS: true,
+      contentVisibilityAuto: true,
+    });
+    expect(scope.__benchmarkPaint.displayed).toBeNull();
+    native.mockReturnValue(true);
+    clock.mockReturnValue(42);
+    frame();
+    expect(scope.__benchmarkPaint.displayed).toBe(32);
+    expect(styles).not.toHaveBeenCalled();
+    expect(rects).not.toHaveBeenCalled();
+  });
+
+  it('still rejects offscreen content when the native visibility check succeeds', () => {
+    history.replaceState(null, '', '/target');
+    document.body.innerHTML = '<main><h1>Target</h1></main>';
+    const { scope, frame } = probe();
+    Object.defineProperty(document.querySelector('h1')!, 'checkVisibility', {
+      value: vi.fn(() => true),
+    });
+    vi.spyOn(Element.prototype, 'getBoundingClientRect').mockReturnValue({
+      top: innerHeight + 1,
+      left: 10,
+      width: 100,
+      height: 30,
+      right: 110,
+      bottom: innerHeight + 31,
+    } as DOMRect);
+    scope.__beginBenchmarkNavigation({ path: '/target', text: 'Target', contentSelector: 'main' });
+    frame();
+    expect(scope.__benchmarkPaint.displayed).toBeNull();
+  });
+
   it('records candidates first discovered by the initial RAF in that real frame', () => {
     const clock = vi.spyOn(performance, 'now').mockReturnValue(10);
     history.replaceState(null, '', '/old');
@@ -503,7 +549,10 @@ describe('navigation paint measurement', () => {
     expect(scope.__benchmarkPaint.displayed).toBeNull();
     document.querySelector('main h1')!.firstChild!.nodeValue = 'Target';
     await Promise.resolve();
-    expect(textWalks()).toBeGreaterThan(walks);
+    expect(textWalks()).toBe(walks);
+    expect(scope.__benchmarkPaint.candidates.map((candidate: any) => candidate.node)).toEqual([
+      document.querySelector('main h1')!.firstChild,
+    ]);
     expect(scope.__benchmarkPaint.displayed).toBeNull();
     frame();
     expect(scope.__benchmarkPaint.displayed).toBeGreaterThanOrEqual(0);
@@ -511,6 +560,62 @@ describe('navigation paint measurement', () => {
     document.querySelector('main h1')!.firstChild!.nodeValue = 'Other';
     await Promise.resolve();
     expect(textWalks()).toBe(completedWalks);
+  });
+
+  it('updates changed text and added subtrees without rescanning unchanged content', async () => {
+    history.replaceState(null, '', '/target');
+    document.body.innerHTML =
+      '<main><p style="opacity:0">Target</p><h1>Other</h1><div>Other</div></main>';
+    const { scope, frame } = probe();
+    scope.__beginBenchmarkNavigation({ path: '/target', text: 'Target', contentSelector: 'main' });
+    frame();
+    expect(scope.__benchmarkPaint.displayed).toBeNull();
+    const walk = vi.spyOn(document, 'createTreeWalker');
+    const textWalks = () => walk.mock.calls.filter(([, show]) => show === NodeFilter.SHOW_TEXT);
+    document.querySelector('main div')!.firstChild!.nodeValue = 'Unrelated change';
+    await Promise.resolve();
+    expect(textWalks()).toHaveLength(0);
+    document.querySelector('main h1')!.firstChild!.nodeValue = 'Target';
+    await Promise.resolve();
+    expect(textWalks()).toHaveLength(0);
+    expect(scope.__benchmarkPaint.candidates).toHaveLength(2);
+    const added = document.createElement('section');
+    added.innerHTML = '<nav>Target</nav><aside>Target</aside><h2>Target</h2>';
+    document.querySelector('main')!.append(added);
+    await Promise.resolve();
+    expect(textWalks()).toHaveLength(1);
+    expect(textWalks()[0][0]).toBe(added);
+    expect(scope.__benchmarkPaint.candidates).toHaveLength(3);
+    expect(scope.__benchmarkPaint.displayed).toBeNull();
+    frame();
+    expect(scope.__benchmarkPaint.displayed).toBeGreaterThanOrEqual(0);
+  });
+
+  it('drops removed or reparented candidates before accepting replacement content', async () => {
+    history.replaceState(null, '', '/target');
+    document.body.innerHTML =
+      '<header></header><main><p style="opacity:0">Target</p><h1>Other</h1></main>';
+    const { scope, frame } = probe();
+    scope.__beginBenchmarkNavigation({ path: '/target', text: 'Target', contentSelector: 'main' });
+    frame();
+    const original = document.querySelector('main p')!;
+    document.querySelector('header')!.append(original);
+    original.removeAttribute('style');
+    await Promise.resolve();
+    expect(scope.__benchmarkPaint.candidates).toHaveLength(0);
+    frame();
+    expect(scope.__benchmarkPaint.displayed).toBeNull();
+    document.querySelector('main h1')!.firstChild!.nodeValue = 'Target';
+    await Promise.resolve();
+    expect(scope.__benchmarkPaint.candidates).toHaveLength(1);
+    document.querySelector('main h1')!.remove();
+    await Promise.resolve();
+    expect(scope.__benchmarkPaint.candidates).toHaveLength(0);
+    document.querySelector('main')!.append(document.createTextNode('Target'));
+    await Promise.resolve();
+    expect(scope.__benchmarkPaint.candidates).toHaveLength(1);
+    frame();
+    expect(scope.__benchmarkPaint.displayed).toBeGreaterThanOrEqual(0);
   });
 
   it('excludes navigation and aside duplicates inside the selected content root', async () => {
