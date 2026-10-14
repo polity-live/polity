@@ -57,9 +57,12 @@ describe('distributed Zero workload planning', () => {
   it('covers every query variant, keeps all variants of a query together, and covers security once', () => {
     const result = manifest();
     expect(QUERY_SHARD_COUNT).toBe(64);
-    expect(SECURITY_SHARD_COUNT).toBe(2);
-    expect(TOTAL_SHARD_COUNT).toBe(68);
-    expect(result.shards).toHaveLength(68);
+    expect(SECURITY_SHARD_COUNT).toBe(8);
+    expect(TOTAL_SHARD_COUNT).toBe(74);
+    expect(result.shards).toHaveLength(74);
+    expect(
+      result.shards.filter(shard => shard.layer === 'security').map(shard => shard.id)
+    ).toEqual(Array.from({ length: 8 }, (_, index) => `security-${index + 1}`));
     expect(result.shards.filter(shard => shard.layer === 'queries').map(shard => shard.id)).toEqual(
       Array.from({ length: 64 }, (_, index) => `queries-${index + 1}`)
     );
@@ -112,7 +115,7 @@ describe('distributed Zero workload planning', () => {
     for (const [valid, invalid] of [
       ['queries-64', 'queries-65'],
       ['queries-64', 'queries-064'],
-      ['security-2', 'security-3'],
+      ['security-8', 'security-9'],
     ]) {
       const value = manifest();
       value.shards.find(shard => shard.id === valid)!.id = invalid;

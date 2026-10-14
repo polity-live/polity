@@ -157,7 +157,7 @@ describe('mutation CI scheduling and confirmation', () => {
   });
   it('covers queries and mutations on sixty-four catalog jobs while distributing independent nested variants', () => {
     const plan = manifest();
-    expect(plan.shards).toHaveLength(68);
+    expect(plan.shards).toHaveLength(74);
     expect(plan.shards.filter(shard => shard.layer === 'queries')).toHaveLength(64);
     for (const revision of ['head', 'base'] as const) {
       const assigned = plan.shards

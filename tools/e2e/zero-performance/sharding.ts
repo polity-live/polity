@@ -4,7 +4,9 @@ import type { MutationExpectation } from './mutation-metrics';
 
 export const SHARD_FORMAT = 2;
 export const QUERY_SHARD_COUNT = 64;
-export const SECURITY_SHARD_COUNT = 2;
+// Keep every security case and the complete fixture replay, while reducing the
+// number of fresh query pipelines accumulated by a single Zero process.
+export const SECURITY_SHARD_COUNT = 8;
 export const TOTAL_SHARD_COUNT = QUERY_SHARD_COUNT + SECURITY_SHARD_COUNT + 2;
 export const ACTIVE_BUDGET_MS = { prepare: 180_000, runner: 900_000, merge: 120_000 };
 export const PROFILE_KEYS = [
