@@ -1118,12 +1118,24 @@ export const eventQueries = {
       let q = zql.group_connection
         .where(({ or, exists }: any) =>
           or(
-            exists('group_a', (group: any) => applyGroupQueryAccess(group, userID)),
-            exists('group_b', (group: any) => applyGroupQueryAccess(group, userID)),
-            exists('parent_group', (group: any) => applyGroupQueryAccess(group, userID)),
-            exists('child_group', (group: any) => applyGroupQueryAccess(group, userID)),
-            exists('from_group', (group: any) => applyGroupQueryAccess(group, userID)),
-            exists('to_group', (group: any) => applyGroupQueryAccess(group, userID))
+            exists('group_a', (group: any) => applyGroupQueryAccess(group, userID), {
+              flip: false,
+            }),
+            exists('group_b', (group: any) => applyGroupQueryAccess(group, userID), {
+              flip: false,
+            }),
+            exists('parent_group', (group: any) => applyGroupQueryAccess(group, userID), {
+              flip: false,
+            }),
+            exists('child_group', (group: any) => applyGroupQueryAccess(group, userID), {
+              flip: false,
+            }),
+            exists('from_group', (group: any) => applyGroupQueryAccess(group, userID), {
+              flip: false,
+            }),
+            exists('to_group', (group: any) => applyGroupQueryAccess(group, userID), {
+              flip: false,
+            })
           )
         )
         .related('group_a', group => applyGroupDiscoveryQueryAccess(group, userID))

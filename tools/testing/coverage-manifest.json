@@ -125672,6 +125672,16 @@
       "suggestedTestRefs": []
     },
     {
+      "path": "src/zero/events/__tests__/groupRelationships.access-plan.unit.test.ts",
+      "domain": "zero:events",
+      "owner": "polity/zero:events",
+      "kind": "test-infrastructure",
+      "verification": "self-test",
+      "coverageStatus": "not-instrumented",
+      "testRefs": [],
+      "suggestedTestRefs": []
+    },
+    {
       "path": "src/zero/events/__tests__/useEventState.coverage.component.test.tsx",
       "domain": "zero:events",
       "owner": "polity/zero:events",
@@ -131454,7 +131464,8 @@
       "suggestedTestRefs": [
         "src/features/groups/__tests__/group-relationships.component-flow.test.tsx",
         "src/features/network/logic/__tests__/groupRelationshipSentence.unit.test.ts",
-        "src/features/network/logic/__tests__/relationshipSummaryHelpers.unit.test.ts"
+        "src/features/network/logic/__tests__/relationshipSummaryHelpers.unit.test.ts",
+        "src/zero/events/__tests__/groupRelationships.access-plan.unit.test.ts"
       ]
     },
     {
