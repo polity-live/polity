@@ -73,6 +73,13 @@ For every case the suite measures an empty profile and a minimal positive profil
 
 Budgets: total first authoritative result ≤1,000 ms, local initial materialization ≤50 ms, actual server materialization (`Inspector.hydrateServer`, stored as `samples.serverMs`) ≤100 ms in every fresh client, and zero slow-query warnings. Fresh-client wall time includes subscription activation and server auth/query transformation; connection setup is excluded. Absolute budgets use the maximum of the five materializations. Server hydration measures Zero's query-pipeline work; authentication, query transformation and transfer remain included in the total time. Inspector timings must also be present. Browser budgets and visible-content, cache, preload, live-update and revocation checks remain unchanged. These are reproducible local budgets, not production network guarantees.
 
+Rejected legacy electorate writes require the observer and writer to contain the
+exact SQL electorate before the writer's rollback baseline is captured. Seeing
+only the ballot ID and status is insufficient: subsequently replicated fixture
+electors could otherwise change the baseline independently of the rejected write.
+The full snapshot equality, SQL denial proof, five fresh writers and existing
+deadlines remain mandatory.
+
 The single diagnostic analysis uses the public `joinPlans: false` option. The complete join trace is exported once afterwards with `joinPlans: true`, with its own `exportMs` diagnostic duration. `analyzeMs` retains exactly one unmodified Zero `elapsed` value without a performance budget. Analysis/export errors, timeouts and invalid or missing diagnostics remain failures. Row work and warnings remain validated. Analyzer calls fall from 24 to 2 per case (about 92% fewer); this does not imply the same reduction in end-to-end suite time. Missing plans and slow-query warnings from the separate export still fail the measurement.
 
 Worker progress, console tables and success/failure CSVs share one summary schema: `totalMedianMs`, `totalMaxMs`, `clientMaxMs`, `serverMedianMs`, `serverMaxMs`, `analyzerMs`, `planExportMs`, and the existing Auth/API/transform diagnostics and row counts. Missing diagnostics appear as `missing`, never zero. `startup.json` records setup/build time and reports record worker elapsed times separately from query/analyzer durations; concurrent connection durations must not be summed as wall time.
