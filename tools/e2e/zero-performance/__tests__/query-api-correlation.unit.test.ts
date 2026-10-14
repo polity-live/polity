@@ -1,7 +1,10 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
+import { appendFile, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 import { checkBudgets, type Measurement } from '../metrics';
-import { correlateQueryAPI, parseQueryAPILog } from '../report';
+import { captureQueryAPILogBoundary, correlateQueryAPI, parseQueryAPILog } from '../report';
 
 const name = 'amendments.collaborationPageByUser';
 const structure = { bytes: 13884, queries: 27, conditions: 113, maxQueryDepth: 7 };
@@ -77,9 +80,12 @@ describe('measured query API log boundaries', () => {
     const worker = readFileSync(new URL('../measure.ts', import.meta.url), 'utf8');
     const parent = readFileSync(new URL('../collect.ts', import.meta.url), 'utf8');
     const closed = worker.indexOf('timelineTotals(timeline, elapsed, stats.hydrateTotal)');
-    const captured = worker.indexOf("byteEnd: (await stat(path.join(logOutput, 'app.log'))).size");
+    const captured = worker.indexOf('await captureQueryAPILogBoundary(');
     expect(closed).toBeGreaterThan(0);
     expect(captured).toBeGreaterThan(closed);
+    const saved = worker.indexOf('measurement.samples.push(sample)', closed);
+    expect(saved).toBeGreaterThan(closed);
+    expect(saved).toBeLessThan(captured);
     expect(worker.indexOf('stats.analyze(', captured)).toBeGreaterThan(captured);
     expect(worker).toContain("parseQueryAPILog(await readFile(path.join(logOutput, 'app.log')))");
     expect(parent).toContain('parseQueryAPILog(appLogBuffer)');
@@ -223,5 +229,187 @@ describe('measured query API log boundaries', () => {
     expect(errors).toEqual(Array(2).fill('Invalid query API diagnostic record'));
     expect(parseQueryAPILog(Buffer.alloc(0))).toEqual({ records: [], errors: [] });
     expect(parseQueryAPILog(Buffer.from('unrelated trailing output')).errors).toEqual([]);
+  });
+});
+
+describe('query API diagnostic flush readiness', () => {
+  afterEach(() => vi.useRealTimers());
+  const fakeClock = () =>
+    vi.useFakeTimers({ toFake: ['setTimeout', 'clearTimeout', 'performance'] });
+
+  it('waits for append-only handler/auth/identity/response writes without changing closed native times', async () => {
+    fakeClock();
+    const { item } = fixture();
+    const sample = item.samples[0];
+    const before = structuredClone(sample);
+    const nativeRecords = [
+      request()[0],
+      { ...request()[0], phase: 'handler', elapsed: 0.001 },
+      ...request().slice(1),
+    ];
+    const whole = encode(nativeRecords);
+    const handler = encode(nativeRecords.slice(0, 2));
+    const partial = whole.subarray(0, whole.length - 7);
+    const snapshots = [handler, partial, whole];
+    const read = vi.fn(async () => snapshots.shift() ?? whole);
+    const pending = captureQueryAPILogBoundary(name, sample, read);
+    await vi.advanceTimersByTimeAsync(40);
+    expect(await pending).toEqual({ source: 'app.log', byteEnd: whole.length });
+    expect(read).toHaveBeenCalledTimes(3);
+    expect(sample).toEqual(before);
+    expect(vi.getTimerCount()).toBe(0);
+    sample.apiLogBoundary = await pending;
+    correlateQueryAPI([item], parseQueryAPILog(whole).records);
+    expect(sample.api?.requestID).toBe('8ed08352');
+  });
+
+  it('observes actual asynchronous file appends and keeps the eventual parent reconstruction identical', async () => {
+    const directory = await mkdtemp(path.join(tmpdir(), 'query-api-flush-'));
+    const file = path.join(directory, 'app.log');
+    try {
+      const { item } = fixture();
+      await writeFile(file, encode(request().slice(0, 2)));
+      let reads = 0;
+      const boundary = await captureQueryAPILogBoundary(name, item.samples[0], async signal => {
+        const bytes = await readFile(file, { signal });
+        if (++reads === 1) await appendFile(file, encode(request().slice(2)));
+        return bytes;
+      });
+      expect(reads).toBe(2);
+      item.samples[0].apiLogBoundary = boundary;
+      const measured = parseQueryAPILog(await readFile(file));
+      correlateQueryAPI([item], measured.records);
+      const originalAPI = structuredClone(item.samples[0].api);
+      await appendFile(file, encode(request('analyzer', 7420)));
+      const parent = parseQueryAPILog(await readFile(file));
+      expect(parent.records).toHaveLength(10);
+      correlateQueryAPI([item], parent.records);
+      expect(item.samples[0].api).toEqual(originalAPI);
+      expect(originalAPI?.requestID).toBe('8ed08352');
+    } finally {
+      await rm(directory, { recursive: true });
+    }
+  });
+
+  it.each(['partial-tail', 'pending-request'])(
+    'does not select a complete first request before a second %s resolves into ambiguity',
+    async mode => {
+      fakeClock();
+      const { item } = fixture();
+      const first = encode(request());
+      const second = encode(request('retry', 1100));
+      const incomplete =
+        mode === 'partial-tail'
+          ? second.subarray(0, second.length - 10)
+          : encode(request('retry', 1100).slice(0, 1));
+      const snapshots = [Buffer.concat([first, incomplete]), Buffer.concat([first, second])];
+      const read = vi.fn(async () => (snapshots.length > 1 ? snapshots.shift()! : snapshots[0]));
+      const rejected = expect(
+        captureQueryAPILogBoundary(name, item.samples[0], read)
+      ).rejects.toThrow('readiness exceeded 1000 ms');
+      await vi.advanceTimersByTimeAsync(1000);
+      await rejected;
+      expect(read.mock.calls.length).toBeGreaterThan(1);
+      expect(vi.getTimerCount()).toBe(0);
+    }
+  );
+
+  it.each(['empty', 'partial', 'missing-phase', 'invalid-timing', 'malformed-identity'])(
+    'fails closed within the diagnostic deadline for %s evidence',
+    async mode => {
+      fakeClock();
+      const { item } = fixture();
+      const records: any[] = request();
+      if (mode === 'missing-phase') records.splice(1, 1);
+      if (mode === 'invalid-timing') records.at(-1).elapsed = 100;
+      if (mode === 'malformed-identity') records[3].queries = null;
+      let bytes = encode(records);
+      if (mode === 'empty') bytes = Buffer.alloc(0);
+      if (mode === 'partial') bytes = bytes.subarray(0, bytes.length - 7);
+      const rejected = expect(
+        captureQueryAPILogBoundary(name, item.samples[0], async () => bytes)
+      ).rejects.toThrow('readiness exceeded 1000 ms');
+      await vi.advanceTimersByTimeAsync(1000);
+      await rejected;
+      expect(vi.getTimerCount()).toBe(0);
+    }
+  );
+
+  it('bounds a noncooperative stalled read and aborts its signal', async () => {
+    fakeClock();
+    const { item } = fixture();
+    let signal: AbortSignal | undefined;
+    const rejected = expect(
+      captureQueryAPILogBoundary(name, item.samples[0], async supplied => {
+        signal = supplied;
+        return await new Promise<Buffer>(() => {
+          // Deliberately ignore abort and never settle to exercise the outer deadline.
+        });
+      })
+    ).rejects.toThrow('readiness exceeded 1000 ms');
+    await vi.advanceTimersByTimeAsync(1000);
+    await rejected;
+    expect(signal?.aborted).toBe(true);
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('does not accept synchronous parsing after the monotonic deadline', async () => {
+    const { item } = fixture();
+    const spy = vi
+      .spyOn(performance, 'now')
+      .mockReturnValueOnce(0)
+      .mockReturnValueOnce(990)
+      .mockReturnValue(1001);
+    try {
+      await expect(
+        captureQueryAPILogBoundary(name, item.samples[0], async () => encode(request()))
+      ).rejects.toThrow('readiness exceeded 1000 ms');
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it.each(['truncate', 'rewrite'])(
+    'refuses an observed log %s rather than forgetting earlier ambiguity',
+    async mode => {
+      fakeClock();
+      const { item } = fixture();
+      const original = encode(request().slice(0, 1));
+      const second = mode === 'truncate' ? Buffer.alloc(0) : encode(request('different'));
+      const snapshots = [original, second];
+      const rejected = expect(
+        captureQueryAPILogBoundary(name, item.samples[0], async () => snapshots.shift()!)
+      ).rejects.toThrow('not append-only');
+      await vi.advanceTimersByTimeAsync(20);
+      await rejected;
+    }
+  );
+
+  it('rejects a completed malformed line or missing request ID immediately and propagates read errors', async () => {
+    const { item } = fixture();
+    const malformed = Buffer.from('{"benchmark":"query-api","phase":broken}\n');
+    await expect(
+      captureQueryAPILogBoundary(name, item.samples[0], async () => malformed)
+    ).rejects.toThrow('Invalid query API diagnostic record');
+    const identity: any = request()[3];
+    delete identity.requestID;
+    await expect(
+      captureQueryAPILogBoundary(name, item.samples[0], async () => encode([identity]))
+    ).rejects.toThrow('Invalid query API diagnostic request identity');
+    await expect(
+      captureQueryAPILogBoundary(name, item.samples[0], async () => {
+        throw new Error('read failed');
+      })
+    ).rejects.toThrow('read failed');
+  });
+
+  it('allows a completed bootstrap request with no workload queries and unrelated client records', async () => {
+    const { item } = fixture();
+    const bootstrap = request('bootstrap').filter(record => record.phase !== 'transform');
+    bootstrap.find(record => record.phase === 'query-identities')!.queries = [];
+    const bytes = encode([...bootstrap, ...request('another-client', 1000, 'other'), ...request()]);
+    await expect(
+      captureQueryAPILogBoundary(name, item.samples[0], async () => bytes)
+    ).resolves.toEqual({ source: 'app.log', byteEnd: bytes.length });
   });
 });

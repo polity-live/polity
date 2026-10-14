@@ -15,7 +15,7 @@ import { buildQuery, loadCases, OWNER, OUTSIDER, type BenchmarkCase } from './ca
 import { Fixtures } from './fixtures';
 import { expectedRootIDs, queryAST, resultIDs, relatedResultIDs } from './oracle';
 import { assertAuthoritativeRootResult } from './authoritative-order-diagnostic';
-import { BUDGETS, REPETITIONS, checkBudgets, type Measurement } from './metrics';
+import { BUDGETS, REPETITIONS, checkBudgets, type Measurement, type Sample } from './metrics';
 import { measureJourneys } from './journeys';
 import {
   securityScenarios,
@@ -27,6 +27,7 @@ import {
   REPORT_FORMAT,
   MEASUREMENT_PROTOCOL,
   correlateQueryAPI,
+  captureQueryAPILogBoundary,
   parseQueryAPILog,
   measuredServerWarnings,
 } from './report';
@@ -317,12 +318,7 @@ async function measure(
         )
           throw new Error('Missing client/server/total hydration metrics');
         timelineTotals(timeline, elapsed, stats.hydrateTotal);
-        const apiLogBoundary = {
-          source: 'app.log' as const,
-          byteEnd: (await stat(path.join(logOutput, 'app.log'))).size,
-        };
-        measurement.samples.push({
-          apiLogBoundary,
+        const sample: Sample = {
           clientCorrelationID: required(clientCorrelations.get(zero)),
           queryID: stats.id,
           activatedAt,
@@ -333,7 +329,11 @@ async function measure(
           clientGroupID,
           clientID: zero.clientID,
           connectionMs,
-        });
+        };
+        measurement.samples.push(sample);
+        sample.apiLogBoundary = await captureQueryAPILogBoundary(measurement.name, sample, signal =>
+          readFile(path.join(logOutput, 'app.log'), { signal })
+        );
         if (iteration === 0) {
           // Retain this real view for analysis, but complete every fresh-client
           // timing before any analyzer or join-plan export can load the stack.

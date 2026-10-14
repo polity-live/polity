@@ -1,4 +1,10 @@
-import { BUDGETS, checkBudgets, type Measurement } from './metrics';
+import {
+  BUDGETS,
+  checkBudgets,
+  validQueryAPISample,
+  type Measurement,
+  type Sample,
+} from './metrics';
 import { queryObservationFailures, type QueryObservation } from './journey-metrics';
 import { securityCaseManifest, type SecurityCaseExpectation } from './security';
 import { loadCases } from './catalog';
@@ -51,6 +57,78 @@ export function parseQueryAPILog(log: Buffer) {
     byteStart = byteEnd;
   }
   return { records, errors };
+}
+
+/** Diagnostic log readiness runs after timing closes and before analyzer traffic. */
+export async function captureQueryAPILogBoundary(
+  name: string,
+  sample: Sample,
+  readLog: (signal: AbortSignal) => Promise<Buffer>
+): Promise<NonNullable<Sample['apiLogBoundary']>> {
+  const controller = new AbortController();
+  const timeout = new Error('Query API log readiness exceeded 1000 ms');
+  const deadline = performance.now() + 1000;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const expired = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => {
+      reject(timeout);
+      controller.abort();
+    }, 1000);
+  });
+  const observe = async () => {
+    let previous = Buffer.alloc(0);
+    while (!controller.signal.aborted) {
+      const log = await readLog(controller.signal);
+      if (controller.signal.aborted || performance.now() >= deadline) throw timeout;
+      if (log.length < previous.length || !log.subarray(0, previous.length).equals(previous))
+        throw new Error('Query API diagnostic log is not append-only');
+      previous = Buffer.from(log);
+      // A temporary EOF in a piped write is pending, never sliced into a JSON record.
+      const prefix = log.subarray(0, log.lastIndexOf(10) + 1);
+      const parsed = parseQueryAPILog(prefix);
+      if (parsed.errors.length) throw new Error(parsed.errors.join('; '));
+      const requests = new Map<string, any[]>();
+      for (const record of parsed.records) {
+        if (record.clientCorrelationID !== sample.clientCorrelationID) continue;
+        if (typeof record.requestID !== 'string' || !record.requestID)
+          throw new Error('Invalid query API diagnostic request identity');
+        const group = requests.get(record.requestID) ?? [];
+        group.push(record);
+        requests.set(record.requestID, group);
+      }
+      const unresolved = [...requests.values()].some(group => {
+        const identities = group.filter(record => record.phase === 'query-identities');
+        return (
+          identities.length !== 1 ||
+          !Array.isArray(identities[0].queries) ||
+          group.filter(record => record.phase === 'response').length !== 1
+        );
+      });
+      const boundary = { source: 'app.log' as const, byteEnd: prefix.length };
+      const observed = { ...sample, apiLogBoundary: boundary };
+      const measurement = { name, samples: [observed], failures: [] } as unknown as Measurement;
+      correlateQueryAPI([measurement], parsed.records);
+      if (performance.now() >= deadline) throw timeout;
+      if (prefix.length === log.length && !unresolved && validQueryAPISample(observed))
+        return boundary;
+      await new Promise<void>(resolve => {
+        const done = () => {
+          clearTimeout(tick);
+          controller.signal.removeEventListener('abort', done);
+          resolve();
+        };
+        const tick = setTimeout(done, 20);
+        controller.signal.addEventListener('abort', done, { once: true });
+      });
+    }
+    throw timeout;
+  };
+  try {
+    return await Promise.race([observe(), expired]);
+  } finally {
+    clearTimeout(timer);
+    controller.abort();
+  }
 }
 
 export function correlateQueryAPI(measurements: Measurement[], records: any[]) {
