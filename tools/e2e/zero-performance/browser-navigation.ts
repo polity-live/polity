@@ -328,7 +328,7 @@ export function installNavigationProbe() {
       // in unrelated headers, navigation, sidebars or portals.
       for (const parent of parents) state.observer?.observe(parent, { childList: true });
     };
-    const inspect = (inAnimationFrame = false) => {
+    const inspect = (inAnimationFrame = false, mutations?: MutationRecord[]) => {
       if (scope.__benchmarkPaint !== state || state.displayed !== null) return;
       if (location.pathname.replace(/\/$/, '') !== target.path.replace(/\/$/, '')) {
         observeContent(null);
@@ -348,24 +348,42 @@ export function installNavigationProbe() {
         return;
       }
       const content = contentRoot();
+      const sameContent = content === state.observedContent && sameAncestors(ancestors(content));
       observeContent(content);
       if (!content) return;
-      const walker = document.createTreeWalker(content, NodeFilter.SHOW_TEXT);
-      const candidates: { node: Node; element: Element }[] = [];
-      let node: Node | null;
-      while ((node = walker.nextNode())) {
-        if (node.textContent?.trim() !== target.text) continue;
+      const candidates = new Map<Node, { node: Node; element: Element }>();
+      const collectText = (node: Node) => {
+        if (!content.contains(node) || node.textContent?.trim() !== target.text) return;
         const element = node.parentElement;
         if (
           !element ||
           element.closest('nav,aside') ||
           (target.contentSelector && !element.closest(target.contentSelector))
         )
-          continue;
-        candidates.push({ node, element });
-      }
-      state.candidates = candidates;
-      if (!candidates.length) return;
+          return;
+        candidates.set(node, { node, element });
+      };
+      const collectSubtree = (root: Node) => {
+        if (root.nodeType === Node.TEXT_NODE) collectText(root);
+        const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+        let node: Node | null;
+        while ((node = walker.nextNode())) collectText(node);
+      };
+      if (mutations && sameContent) {
+        // Mutation records describe every changed text/subtree. Retain valid
+        // candidates and inspect only changed nodes, avoiding repeated whole-page
+        // diagnostic scans inside the measured navigation interval.
+        for (const candidate of state.candidates) collectText(candidate.node);
+        for (const mutation of mutations) {
+          if (mutation.type === 'characterData') collectText(mutation.target);
+          else
+            for (const added of mutation.addedNodes) {
+              if (content.contains(added)) collectSubtree(added);
+            }
+        }
+      } else collectSubtree(content);
+      state.candidates = [...candidates.values()];
+      if (!state.candidates.length) return;
       // Check layout only in the animation frame, after React's DOM work.
       // A layout box can still be transparent or outside the viewport. Recheck
       // the candidate each frame until it can actually be painted.
@@ -422,7 +440,7 @@ export function installNavigationProbe() {
         !content ||
         records.some(record => content.contains(record.target))
       )
-        inspect();
+        inspect(false, records);
     });
     state.observer.observe(document, { childList: true, subtree: true, characterData: true });
     inspect();
