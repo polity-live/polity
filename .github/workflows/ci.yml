@@ -708,20 +708,18 @@ jobs:
           pnpm exec playwright install --with-deps chromium
       - name: Start and reset isolated Supabase stack
         run: |
-          supabase start
           for attempt in 1 2 3; do
-            if supabase db reset --local --no-seed; then
+            if supabase start && supabase db reset --local --no-seed; then
               break
             fi
             if [[ "$attempt" -eq 3 ]]; then
-              echo "Supabase reset failed after $attempt attempts"
+              echo "Supabase start/reset failed after $attempt attempts"
               exit 1
             fi
             delay_seconds=$(( attempt * 10 ))
-            echo "Supabase reset attempt $attempt failed; retrying in ${delay_seconds}s"
+            echo "Supabase start/reset attempt $attempt failed; retrying in ${delay_seconds}s"
             supabase stop --no-backup || true
             sleep "$delay_seconds"
-            supabase start
           done
       - name: Export isolated stack environment
         run: |
