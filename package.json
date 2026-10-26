@@ -120,11 +120,11 @@
     "zero:performance:merge": "tsx tools/e2e/zero-performance/distributed.ts merge"
   },
   "dependencies": {
-    "@ai-sdk/anthropic": "^4.0.76",
-    "@ai-sdk/openai": "^4.0.89",
-    "@ai-sdk/provider": "^4.0.25",
-    "@ai-sdk/provider-utils": "^5.0.57",
-    "@ai-sdk/react": "^4.0.136",
+    "@ai-sdk/anthropic": "^4.0.87",
+    "@ai-sdk/openai": "^4.0.101",
+    "@ai-sdk/provider": "^4.0.33",
+    "@ai-sdk/provider-utils": "^5.0.67",
+    "@ai-sdk/react": "^4.0.154",
     "@ariakit/react": "^0.4.41",
     "@date-fns/tz": "^1.5.0",
     "@emoji-mart/data": "^1.2.1",
@@ -213,7 +213,7 @@
     "@tanstack/router-devtools": "^1.167.2",
     "@udecode/cn": "^52.3.4",
     "@xyflow/react": "^12.12.0",
-    "ai": "^7.0.133",
+    "ai": "^7.0.150",
     "buffer": "^6.0.3",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
@@ -240,7 +240,7 @@
     "nitro": "3.0.260610-beta",
     "path-browserify": "^1.0.1",
     "pdf-lib": "^1.17.1",
-    "platejs": "^53.3.15",
+    "platejs": "^53.3.18",
     "polygon-clipping": "^0.15.7",
     "postgres": "^3.4.9",
     "pptxgenjs": "^4.0.1",
@@ -278,7 +278,7 @@
     "use-file-picker": "^2.1.4",
     "vaul": "^1.1.2",
     "web-push": "^3.6.7",
-    "zod": "^4.6.5",
+    "zod": "^4.6.7",
     "zustand": "^5.0.15"
   },
   "devDependencies": {
