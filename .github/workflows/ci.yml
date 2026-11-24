@@ -108,7 +108,7 @@ jobs:
         run: echo "version=$(node -p 'require("./node_modules/@playwright/test/package.json").version')" >> "$GITHUB_OUTPUT"
       - name: Cache pinned Chromium
         if: matrix.layer == 'journeys'
-        uses: actions/cache@v4
+        uses: actions/cache@v6
         with:
           path: ~/.cache/ms-playwright
           key: zero-chromium-${{ runner.os }}-${{ runner.arch }}-${{ steps.playwright.outputs.version }}
